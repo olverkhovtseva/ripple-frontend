@@ -1,0 +1,88 @@
+// Prisma schema — SQLite for local MVP.
+// For production PostgreSQL: change provider to "postgresql" and set DATABASE_URL.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String?  @unique
+  name      String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  projects     Project[]
+  participants Participant[]
+
+  @@map("users")
+}
+
+model Project {
+  id           String   @id @default(cuid())
+  organizerId  String   @map("organizer_id")
+  productType  String   @default("video") @map("product_type")
+  title        String
+  heroName     String   @map("hero_name")
+  deadline     DateTime
+  shareSlug    String   @unique @map("share_slug")
+  status       String   @default("active")
+  inviteMessage String? @map("invite_message")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  organizer  User               @relation(fields: [organizerId], references: [id])
+  questions  ProjectQuestion[]
+  participants Participant[]
+
+  @@map("projects")
+}
+
+model ProjectQuestion {
+  id           String  @id @default(cuid())
+  projectId    String  @map("project_id")
+  questionText String  @map("question_text")
+  hintText     String? @map("hint_text")
+  orderIndex   Int     @map("order_index")
+
+  project Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  answers MediaAnswer[]
+
+  @@map("project_questions")
+}
+
+model Participant {
+  id        String   @id @default(cuid())
+  projectId String   @map("project_id")
+  userId    String?  @map("user_id")
+  firstName String?  @map("first_name")
+  lastName  String?  @map("last_name")
+  status    String   @default("in_progress")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  project Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User?         @relation(fields: [userId], references: [id])
+  answers MediaAnswer[]
+
+  @@map("participants")
+}
+
+model MediaAnswer {
+  id              String   @id @default(cuid())
+  participantId   String   @map("participant_id")
+  questionId      String   @map("question_id")
+  fileUrl         String   @map("file_url")
+  fileMimeType    String?  @map("file_mime_type")
+  durationSeconds Int?     @map("duration_seconds")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  participant Participant     @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  question    ProjectQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([participantId, questionId])
+  @@map("media_answers")
+}

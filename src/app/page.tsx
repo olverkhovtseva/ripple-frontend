@@ -1,5 +1,5 @@
-import KithHome from "@/components/kithandkin/KithHome";
+import HomePage from "@/components/home/HomePage";
 
 export default function Home() {
-  return <KithHome />;
+  return <HomePage />;
 }

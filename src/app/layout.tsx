@@ -1,28 +1,30 @@
-import type { Metadata } from "next";
-import localFont from "next/font/local";
+import type { Metadata, Viewport } from "next";
+import { Inter, Unbounded } from "next/font/google";
+import LavaCursor from "@/components/effects/LavaCursor";
 import "./globals.css";
 
-const kurland = localFont({
-  src: [
-    {
-      path: "../fonts/Kurland/Kurland-Regular.otf",
-      weight: "400",
-      style: "normal",
-    },
-    {
-      path: "../fonts/Kurland/Kurland-Italic.otf",
-      weight: "400",
-      style: "italic",
-    },
-  ],
-  variable: "--font-display",
+const inter = Inter({
+  subsets: ["latin", "cyrillic"],
+  variable: "--font-inter",
+  display: "swap",
+});
+
+const unbounded = Unbounded({
+  subsets: ["latin", "cyrillic"],
+  variable: "--font-oswald",
   display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "Prive Stories — групповой памятный подарок",
+  title: "Prive Stories — подарок, который растрогает до слез",
   description:
-    "Собираем воспоминания, чувства и личные истории и превращаем их в памятный артефакт.",
+    "Сервис сам соберет теплые воспоминания, истории и фотографии от друзей, близких или коллег и оформит их в презентацию, книгу или видео-фильм.",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
@@ -31,8 +33,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ru" className={kurland.variable}>
-      <body className={kurland.className}>{children}</body>
+    <html lang="ru" className={`${inter.variable} ${unbounded.variable}`}>
+      <body>
+        <LavaCursor />
+        {children}
+      </body>
     </html>
   );
 }

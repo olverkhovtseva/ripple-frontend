@@ -1,0 +1,91 @@
+.deadline {
+  display: inline-flex;
+  margin: 0 0 1rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: 999px;
+  background: rgba(201, 162, 39, 0.16);
+  color: #351e28;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.hint {
+  margin: 0 0 1.25rem;
+  max-width: 38rem;
+  padding: 0.75rem 0.9rem;
+  background: rgba(53, 30, 40, 0.04);
+  border-left: 2px solid rgba(201, 162, 39, 0.55);
+  font-size: 0.82rem;
+  line-height: 1.5;
+  font-weight: 450;
+  color: rgba(28, 41, 40, 0.68);
+}
+
+.hintLabel {
+  display: block;
+  margin-bottom: 0.3rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: rgba(201, 162, 39, 0.95);
+}
+
+.nameRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 8rem;
+  border: 2px dashed rgba(53, 30, 40, 0.25);
+  border-radius: 0.5rem;
+  background: rgba(53, 30, 40, 0.03);
+  cursor: pointer;
+  text-align: center;
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.dropzone input {
+  display: none;
+}
+
+.dropzone span {
+  font-weight: 700;
+  color: #351e28;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+}
+
+.dropzone small {
+  color: rgba(28, 41, 40, 0.55);
+}
+
+.preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.preview video {
+  width: 100%;
+  border-radius: 0.4rem;
+  background: #111;
+  max-height: 20rem;
+}
+
+@media (max-width: 600px) {
+  .nameRow {
+    grid-template-columns: 1fr;
+  }
+}

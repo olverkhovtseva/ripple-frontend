@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 120" fill="none" aria-hidden="true">
+  <!-- open book outline -->
+  <path
+    d="M18 22h74c4 0 8 3 8 8v68c0-4 3-7 8-7h66c6 0 8-4 8-9V22"
+    stroke="#fff"
+    stroke-width="3.2"
+    stroke-linejoin="round"
+  />
+  <path d="M100 30v68" stroke="#fff" stroke-width="3.2" />
+  <path d="M18 22v69c0 5 3 9 9 9h65" stroke="#fff" stroke-width="3.2" stroke-linejoin="round" />
+  <path d="M182 22v60c0 5-2 9-8 9h-10" stroke="#fff" stroke-width="3.2" stroke-linejoin="round" />
+  <!-- page flutter -->
+  <path d="M14 88c-4 2-7 6-8 12" stroke="#fff" stroke-width="2.4" stroke-linecap="round" />
+  <path d="M20 92c-3 3-5 7-5 12" stroke="#fff" stroke-width="2.2" stroke-linecap="round" />
+  <path d="M26 94c-2 3-3 7-3 11" stroke="#fff" stroke-width="2" stroke-linecap="round" />
+  <!-- type -->
+  <text
+    x="55"
+    y="72"
+    text-anchor="middle"
+    fill="#fff"
+    font-family="Arial Narrow, Arial, sans-serif"
+    font-size="16"
+    font-weight="700"
+    letter-spacing="0.18em"
+  >PRIVÉ</text>
+  <text
+    x="142"
+    y="72"
+    text-anchor="middle"
+    fill="#fff"
+    font-family="Arial Narrow, Arial, sans-serif"
+    font-size="14"
+    font-weight="700"
+    letter-spacing="0.12em"
+  >STORIES</text>
+</svg>

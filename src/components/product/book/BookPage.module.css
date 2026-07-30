@@ -1,0 +1,163 @@
+.bookScene {
+  position: relative;
+  width: min(100%, 26rem);
+  animation: bookIn 0.95s ease both;
+}
+
+.woodGlow {
+  position: absolute;
+  inset: 18% -10% -8%;
+  background:
+    radial-gradient(
+      ellipse at 50% 70%,
+      rgba(201, 162, 39, 0.28) 0%,
+      rgba(53, 30, 40, 0.08) 45%,
+      transparent 72%
+    );
+  filter: blur(10px);
+  pointer-events: none;
+}
+
+.bookMock {
+  position: relative;
+  z-index: 1;
+  transform: rotateY(-8deg) rotateX(6deg);
+  transform-style: preserve-3d;
+}
+
+.bookCover {
+  position: relative;
+  aspect-ratio: 3 / 4;
+  border-radius: 0.35rem 0.85rem 0.85rem 0.35rem;
+  overflow: hidden;
+  background: #2a1c22;
+  box-shadow:
+    0 28px 55px rgba(53, 30, 40, 0.35),
+    inset 0 0 0 1px rgba(201, 162, 39, 0.22);
+}
+
+.bookCover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  filter: saturate(0.92) brightness(0.9);
+}
+
+.foilLine {
+  position: absolute;
+  left: 18%;
+  right: 18%;
+  top: 22%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(201, 162, 39, 0.85),
+    transparent
+  );
+}
+
+.foilTitle {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 26%;
+  margin: 0;
+  text-align: center;
+  font-family: var(--font-oswald), Unbounded, sans-serif;
+  font-size: clamp(0.85rem, 2vw, 1.05rem);
+  letter-spacing: 0.22em;
+  color: #c9a227;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.25);
+  font-weight: 600;
+}
+
+.bookShadow {
+  height: 0.9rem;
+  margin: 0.35rem 8% 0;
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(53, 30, 40, 0.28),
+    transparent 70%
+  );
+}
+
+.includesGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.tiers {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  margin: 0 0 1.75rem;
+}
+
+.tier {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.95rem 0;
+  border-bottom: 1px solid rgba(245, 245, 243, 0.12);
+}
+
+.tier:first-child {
+  border-top: 1px solid rgba(245, 245, 243, 0.12);
+}
+
+.tierCopy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.tierLabel {
+  font-family: var(--font-oswald), Unbounded, sans-serif;
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #f5f5f3;
+}
+
+.tierDetail {
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: rgba(245, 245, 243, 0.65);
+}
+
+.tierPrice {
+  flex: 0 0 auto;
+  font-family: var(--font-oswald), Unbounded, sans-serif;
+  font-size: 1.2rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: #c9a227;
+}
+
+@keyframes bookIn {
+  from {
+    opacity: 0;
+    transform: translateY(1.1rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 900px) {
+  .includesGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bookScene {
+    animation: none;
+  }
+}
