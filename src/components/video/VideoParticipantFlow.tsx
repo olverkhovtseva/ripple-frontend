@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { brand } from "@/components/home/data";
+import { russianNameCases } from "@/lib/cabinet/questions";
 import styles from "@/components/cabinet/Cabinet.module.css";
 import videoStyles from "./VideoParticipant.module.css";
 
@@ -26,6 +27,7 @@ type ProjectMeta = {
   deadlineLabel: string;
   deadline: string;
   shareSlug: string;
+  videoFormat: "vertical" | "horizontal";
   questions: Question[];
 };
 
@@ -42,6 +44,7 @@ export default function VideoParticipantFlow({ shareSlug }: Props) {
   const [participantId, setParticipantId] = useState("");
   const [questions, setQuestions] = useState<Question[]>([]);
   const [answers, setAnswers] = useState<Answer[]>([]);
+  const [skippedIds, setSkippedIds] = useState<string[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
   const [busy, setBusy] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -82,7 +85,31 @@ export default function VideoParticipantFlow({ shareSlug }: Props) {
     return map;
   }, [answers]);
 
+  const skippedSet = useMemo(() => new Set(skippedIds), [skippedIds]);
+
   const current = questions[activeIndex];
+
+  function markSkipped(questionId: string) {
+    setSkippedIds((prev) =>
+      prev.includes(questionId) ? prev : [...prev, questionId],
+    );
+  }
+
+  function clearSkipped(questionId: string) {
+    setSkippedIds((prev) => prev.filter((id) => id !== questionId));
+  }
+
+  function goNext(fromIndex: number, asSkip: boolean) {
+    const q = questions[fromIndex];
+    if (q && asSkip && !answeredMap.has(q.id)) {
+      markSkipped(q.id);
+    }
+    if (fromIndex >= questions.length - 1) {
+      void complete();
+      return;
+    }
+    setActiveIndex(fromIndex + 1);
+  }
 
   async function startRecording() {
     setBusy(true);
@@ -148,6 +175,7 @@ export default function VideoParticipantFlow({ shareSlug }: Props) {
           },
         ];
       });
+      clearSkipped(current.id);
       setPreviewUrl(data.fileUrl);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Ошибка");
@@ -246,31 +274,40 @@ export default function VideoParticipantFlow({ shareSlug }: Props) {
               Сбор видео до: {meta.deadlineLabel}
             </p>
             <h1 className={styles.title}>
-              Ваш голос — часть одного большого подарка
+              {brand.name} — сервис сбора коллективных артефактов памяти
             </h1>
+            <p className={styles.lead}>
+              Вы приглашены стать участником в создании уникального подарка
+            </p>
             <article className={styles.inviteBox}>
               <p>
                 Здравствуйте! Вы здесь, потому что{" "}
                 <strong>{meta.organizerName}</strong> собирает секретный
-                видео-альманах для <strong>{meta.heroName}</strong>. Это не
+                видео-альманах для{" "}
+                <strong>{russianNameCases(meta.heroName).gen}</strong>. Это не
                 просто поздравление, а живой архив памяти, где сохранятся ваши
-                искренние эмоции, смех и теплота.
+                искренние эмоции, смех и теплота
               </p>
               <p>
-                Не переживайте о съемке: нам не нужна студийная картинка или
+                Не переживайте о съёмке: нам не нужна студийная картинка или
                 идеальный дубль. Самое ценное — это вы и ваши настоящие
-                воспоминания.
+                воспоминания
               </p>
               <p className={styles.hint}>
                 Простые советы перед началом:
                 <br />
-                • Поверните телефон горизонтально.
+                • Держите телефон{" "}
+                {meta.videoFormat === "horizontal"
+                  ? "горизонтально"
+                  : "вертикально"}
+                Это поможет соблюсти целостность финального общего видео
                 <br />
-                • Будьте собой. Вспомните смешную мелочь или милую привычку{" "}
-                {meta.heroName}.
+                • Будьте собой. Чем искреннее будут ваши эмоции, тем больше
+                эмоций будет у героя поздравления
                 <br />
-                • Длительность: от 30 секунд до 5 минут на каждый ответ.
-                <br />• Вопрос можно пропустить — но ваш голос особенно важен.
+                • Длительность: от 30 секунд до 5 минут на каждый ответ
+                <br />• Вопрос можно пропустить — но ваш голос и любая памятная
+                мелочь могут быть особенно важны
               </p>
             </article>
 
@@ -309,9 +346,35 @@ export default function VideoParticipantFlow({ shareSlug }: Props) {
 
         {phase === "record" && current ? (
           <>
-            <p className={styles.questionLabel}>
-              Вопрос {activeIndex + 1} из {questions.length}
-            </p>
+            <ol className={videoStyles.qTimeline} aria-label="Прогресс по вопросам">
+              {questions.map((q, index) => {
+                const done = answeredMap.has(q.id);
+                const skipped = !done && skippedSet.has(q.id);
+                return (
+                  <li key={q.id}>
+                    <button
+                      type="button"
+                      aria-label={`Вопрос ${index + 1}${
+                        done ? ", загружен" : skipped ? ", пропущен" : ""
+                      }`}
+                      aria-current={index === activeIndex ? "step" : undefined}
+                      className={[
+                        videoStyles.qStep,
+                        done ? videoStyles.qStepDone : "",
+                        skipped ? videoStyles.qStepSkipped : "",
+                        index === activeIndex ? videoStyles.qStepActive : "",
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}
+                      onClick={() => setActiveIndex(index)}
+                    >
+                      {index + 1}
+                    </button>
+                  </li>
+                );
+              })}
+            </ol>
+
             <h2 className={styles.questionTitle}>{current.text}</h2>
             {current.hint ? (
               <p className={videoStyles.hint}>
@@ -319,30 +382,6 @@ export default function VideoParticipantFlow({ shareSlug }: Props) {
                 {current.hint}
               </p>
             ) : null}
-
-            <ol className={styles.timeline}>
-              {questions.map((q, index) => {
-                const done = answeredMap.has(q.id);
-                return (
-                  <li key={q.id}>
-                    <button
-                      type="button"
-                      className={[
-                        styles.timelineItem,
-                        done ? styles.timelineDone : "",
-                        index === activeIndex ? styles.timelineActive : "",
-                      ]
-                        .filter(Boolean)
-                        .join(" ")}
-                      onClick={() => setActiveIndex(index)}
-                    >
-                      <span>{String(index + 1).padStart(2, "0")}</span>
-                      <span className={styles.timelineText}>{q.text}</span>
-                    </button>
-                  </li>
-                );
-              })}
-            </ol>
 
             <section className={styles.card}>
               <label className={videoStyles.dropzone}>
@@ -387,24 +426,16 @@ export default function VideoParticipantFlow({ shareSlug }: Props) {
                 <button
                   type="button"
                   className={styles.secondary}
-                  onClick={() =>
-                    setActiveIndex((i) =>
-                      Math.min(questions.length - 1, i + 1),
-                    )
-                  }
+                  onClick={() => goNext(activeIndex, true)}
                 >
                   Пропустить этот вопрос
                 </button>
                 <button
                   type="button"
                   className={styles.primary}
-                  onClick={() => {
-                    if (activeIndex >= questions.length - 1) {
-                      void complete();
-                    } else {
-                      setActiveIndex((i) => i + 1);
-                    }
-                  }}
+                  onClick={() =>
+                    goNext(activeIndex, !answeredMap.has(current.id))
+                  }
                 >
                   {activeIndex >= questions.length - 1
                     ? "Завершить"
@@ -420,11 +451,11 @@ export default function VideoParticipantFlow({ shareSlug }: Props) {
             <h2 className={styles.cardTitle}>Спасибо! Ваши теплые слова сохранены</h2>
             <p className={styles.leadSmall}>
               Вы сделали ценный вклад в этот подарок. Мы бережно смонтируем ваше
-              видео в общий фильм для {meta.heroName}.
+              видео в общий фильм для {meta.heroName}
             </p>
             <p className={styles.hint}>
               Вы можете вернуться по этой же ссылке до {meta.deadlineLabel},
-              чтобы пересмотреть, удалить или загрузить новое видео.
+              чтобы пересмотреть, удалить или загрузить новое видео
             </p>
             <button
               type="button"

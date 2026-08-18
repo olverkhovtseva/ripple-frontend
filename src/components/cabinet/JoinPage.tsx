@@ -146,7 +146,7 @@ export default function JoinPage({ token }: Props) {
           </h1>
           <p className={styles.joinInviteBody}>
             Ответьте на несколько вопросов и помогите создать особенный подарок
-            {project.heroName ? ` для ${project.heroName}` : ""}.
+            {project.heroName ? ` для ${project.heroName}` : ""}
           </p>
 
           <label className={styles.joinInviteField}>
@@ -187,8 +187,8 @@ export default function JoinPage({ token }: Props) {
         <p className={styles.eyebrow}>Ответы</p>
         <h1 className={styles.title}>Поделитесь воспоминанием</h1>
         <p className={styles.lead}>
-          Ответы сохраняются только когда вы нажимаете «Сохранить ответ».
-          На таймлайне отмечены уже сохранённые вопросы.
+          Ответы сохраняются только когда вы нажимаете «Сохранить ответ»
+          На таймлайне отмечены уже сохранённые вопросы
         </p>
 
         <ol className={styles.timeline}>

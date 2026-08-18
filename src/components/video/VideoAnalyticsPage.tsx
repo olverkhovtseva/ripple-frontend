@@ -149,7 +149,7 @@ export default function VideoAnalyticsPage({ projectId }: Props) {
         <section className={styles.card}>
           <h2 className={styles.cardTitle}>Участники</h2>
           {data.participants.length === 0 ? (
-            <p className={styles.hint}>Пока никто не начал запись.</p>
+            <p className={styles.hint}>Пока никто не начал запись</p>
           ) : (
             <div className={styles.tableWrap}>
               <table className={styles.table}>

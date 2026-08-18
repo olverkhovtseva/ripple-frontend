@@ -4,6 +4,7 @@ import {
   CSSProperties,
   FormEvent,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -27,88 +28,10 @@ import {
   reviews,
   scenarioTabs,
 } from "./data";
+import AboutValueIcon from "./AboutValueIcon";
 import styles from "./HomePage.module.css";
 
 type AboutRoleId = (typeof about.roles)[number]["id"];
-type AboutIcon = (typeof about.roles)[number]["values"][number]["icon"];
-
-function AboutValueIcon({ name }: { name: AboutIcon }) {
-  const common = {
-    viewBox: "0 0 24 24",
-    fill: "none",
-    stroke: "currentColor",
-    strokeWidth: 1.6,
-    strokeLinecap: "round" as const,
-    strokeLinejoin: "round" as const,
-    "aria-hidden": true,
-  };
-
-  switch (name) {
-    case "clock":
-      return (
-        <svg {...common}>
-          <circle cx="12" cy="12" r="8.25" />
-          <path d="M12 7.75V12l2.75 1.75" />
-        </svg>
-      );
-    case "gift":
-      return (
-        <svg {...common}>
-          <rect x="4.5" y="10" width="15" height="9.5" rx="1.2" />
-          <path d="M4.5 13.5h15M12 10v9.5M12 10c-1.8-2.6-4.7-2.8-5.6-1.4C5.3 10 6.4 12.2 12 10Zm0 0c1.8-2.6 4.7-2.8 5.6-1.4.9 1.4-.2 3.6-5.6 1.4Z" />
-        </svg>
-      );
-    case "script":
-      return (
-        <svg {...common}>
-          <path d="M7.5 5.5h7.2c1.8 0 3.3 1.4 3.3 3.2v9.3c0 .8-.9 1.2-1.5.7l-1.5-1.2H7.5A2.5 2.5 0 0 1 5 14.9V8a2.5 2.5 0 0 1 2.5-2.5Z" />
-          <path d="M9 10h6.5M9 13h5" />
-        </svg>
-      );
-    case "heart":
-      return (
-        <svg {...common}>
-          <path d="M12 19.2s-6.7-4.1-8.4-7.5C2.2 9.2 3.4 6.4 6.2 6c1.6-.2 3.1.6 3.8 1.9.7-1.3 2.2-2.1 3.8-1.9 2.8.4 4 3.2 2.6 5.7-1.7 3.4-8.4 7.5-8.4 7.5Z" />
-        </svg>
-      );
-    case "shield":
-      return (
-        <svg {...common}>
-          <path d="M12 4.5 18.5 7v4.4c0 4.1-2.7 7.4-6.5 8.6-3.8-1.2-6.5-4.5-6.5-8.6V7L12 4.5Z" />
-          <path d="M12 11.2v3.3M12 9.2h.01" />
-        </svg>
-      );
-    case "archive":
-      return (
-        <svg {...common}>
-          <rect x="4.5" y="5" width="15" height="3.2" rx="0.8" />
-          <path d="M6 8.2V18a1.3 1.3 0 0 0 1.3 1.3h9.4A1.3 1.3 0 0 0 18 18V8.2M9.5 12.2h5" />
-        </svg>
-      );
-    case "feather":
-      return (
-        <svg {...common}>
-          <path d="M19.2 4.8c-3.8-.2-8.4 2.1-11.1 6.3L5 16.8l5.7-3.1c4.2-2.7 6.5-7.3 6.3-11.1Z" />
-          <path d="M5 16.8 4 20l3.2-1M9.5 12.5l4.2-4.2" />
-        </svg>
-      );
-    case "spark":
-      return (
-        <svg {...common}>
-          <path d="M12 4.5v3.2M12 16.3v3.2M4.5 12h3.2M16.3 12h3.2M7.1 7.1l2.3 2.3M14.6 14.6l2.3 2.3M16.9 7.1l-2.3 2.3M9.4 14.6l-2.3 2.3" />
-          <circle cx="12" cy="12" r="2.2" />
-        </svg>
-      );
-    case "link":
-      return (
-        <svg {...common}>
-          <path d="M9.5 14.5 14.5 9.5M10.2 8.4l1.4-1.4a3.4 3.4 0 0 1 4.8 4.8l-1.4 1.4M13.8 15.6l-1.4 1.4a3.4 3.4 0 1 1-4.8-4.8l1.4-1.4" />
-        </svg>
-      );
-    default:
-      return null;
-  }
-}
 
 const HERO_COLLAGE_TILES = [
   { src: assets.heroSide1, className: "tileTL" },
@@ -144,6 +67,47 @@ function MetricLabel({
   );
 }
 
+type AboutValue = (typeof about.roles)[number]["values"][number];
+
+function AboutValueCell({
+  value,
+  variant,
+}: {
+  value: AboutValue;
+  variant: "featured" | "left" | "right";
+}) {
+  const cellClass =
+    variant === "featured"
+      ? styles.aboutValueFeatured
+      : variant === "left"
+        ? styles.aboutValueCellLeft
+        : styles.aboutValueCellRight;
+
+  return (
+    <article className={cellClass}>
+      <AboutValueIcon name={value.icon} featured={variant === "featured"} />
+      <h4
+        className={
+          variant === "featured"
+            ? styles.aboutValueFeaturedTitle
+            : styles.aboutValueCellTitle
+        }
+      >
+        {value.title}
+      </h4>
+      <p
+        className={
+          variant === "featured"
+            ? styles.aboutValueFeaturedBody
+            : styles.aboutValueCellBody
+        }
+      >
+        {value.body}
+      </p>
+    </article>
+  );
+}
+
 export default function HomePage() {
   const [audience, setAudience] = useState<Audience>("loved");
   const [artifactIndex, setArtifactIndex] = useState(0);
@@ -152,6 +116,8 @@ export default function HomePage() {
   const [carouselBusy, setCarouselBusy] = useState(false);
   const [wrappingIndex, setWrappingIndex] = useState<number | null>(null);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [reviewPage, setReviewPage] = useState(0);
+  const [reviewsPerPage, setReviewsPerPage] = useState(3);
   const [submitted, setSubmitted] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [heroMotion, setHeroMotion] = useState({
@@ -365,6 +331,40 @@ export default function HomePage() {
     goArtifact((artifactIndex + delta + artifacts.length) % artifacts.length);
   }
 
+  const reviewPages = useMemo(() => {
+    const pages: (typeof reviews)[] = [];
+    for (let i = 0; i < reviews.length; i += reviewsPerPage) {
+      pages.push(reviews.slice(i, i + reviewsPerPage));
+    }
+    return pages;
+  }, [reviewsPerPage]);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 980px)");
+    const update = () => setReviewsPerPage(mq.matches ? 1 : 3);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+
+  useEffect(() => {
+    setReviewPage(0);
+  }, [reviewsPerPage]);
+
+  function shiftAboutRole(delta: 1 | -1) {
+    const roles = about.roles;
+    const currentIndex = roles.findIndex((role) => role.id === aboutRoleId);
+    const nextIndex = (currentIndex + delta + roles.length) % roles.length;
+    setAboutRoleId(roles[nextIndex].id);
+  }
+
+  function shiftReview(delta: 1 | -1) {
+    setReviewPage(
+      (current) =>
+        (current + delta + reviewPages.length) % reviewPages.length,
+    );
+  }
+
   function jumpToArtifact(artifactId: (typeof artifacts)[number]["id"]) {
     const index = artifacts.findIndex((item) => item.id === artifactId);
     if (index >= 0) {
@@ -565,10 +565,11 @@ export default function HomePage() {
                   <li key={tag.label}>
                     <button
                       type="button"
-                      className={styles.tagLink}
+                      className={styles.tagCard}
                       onClick={() => jumpToArtifact(tag.artifactId)}
                     >
-                      {tag.label}
+                      <span className={styles.tagLabel}>{tag.label}</span>
+                      <span className={styles.tagMore}>Узнать больше</span>
                     </button>
                   </li>
                 ))}
@@ -608,134 +609,137 @@ export default function HomePage() {
                   <img src={about.leftBg} alt="" />
                 </div>
                 <p className={styles.eyebrow}>{about.eyebrow}</p>
-                <div
-                  key={aboutRoleId}
-                  className={styles.aboutLeftCopy}
-                >
-                  <p className={styles.aboutLeftLabel}>
-                    {
-                      (
-                        about.roles.find((role) => role.id === aboutRoleId) ??
-                        about.roles[0]
-                      ).leftLabel
-                    }
-                  </p>
+                <div className={styles.aboutLeftCopy}>
                   <h2 className={styles.aboutTitle}>
                     <strong className={styles.aboutTitleBrand}>
                       {about.leftLead}
                     </strong>
                     {" — "}
-                    {
-                      (
-                        about.roles.find((role) => role.id === aboutRoleId) ??
-                        about.roles[0]
-                      ).leftBody
-                    }
+                    {about.leftTagline}
                   </h2>
+                  {about.leftParagraphs.map((paragraph) => (
+                    <p key={paragraph} className={styles.aboutIntroBody}>
+                      {paragraph}
+                    </p>
+                  ))}
                 </div>
               </div>
             </aside>
 
             <div className={styles.aboutSplitRight}>
-              <div className={styles.aboutValues}>
-                <h3 className={styles.aboutValuesHeading}>
-                  {about.valuesHeading}
-                </h3>
-
-                <div
-                  className={styles.aboutTabs}
-                  role="tablist"
-                  aria-label="Аудитория"
+              <div className={styles.aboutValuesCarousel}>
+                <button
+                  type="button"
+                  className={styles.aboutValuesNav}
+                  aria-label="Предыдущая аудитория"
+                  onClick={() => shiftAboutRole(-1)}
                 >
+                  ‹
+                </button>
+
+                <div className={styles.aboutValues}>
+                  <h3 className={styles.aboutValuesHeading}>
+                    {about.valuesHeading}
+                  </h3>
+
+                  <div
+                    className={styles.aboutTabs}
+                    role="tablist"
+                    aria-label="Аудитория"
+                  >
+                    {about.roles.map((role) => {
+                      const active = role.id === aboutRoleId;
+                      return (
+                        <button
+                          key={role.id}
+                          type="button"
+                          role="tab"
+                          id={`about-tab-${role.id}`}
+                          aria-selected={active}
+                          aria-controls={`about-panel-${role.id}`}
+                          tabIndex={active ? 0 : -1}
+                          className={
+                            active ? styles.aboutTabActive : styles.aboutTab
+                          }
+                          onClick={() => setAboutRoleId(role.id)}
+                        >
+                          {role.tab}
+                        </button>
+                      );
+                    })}
+                  </div>
+
                   {about.roles.map((role) => {
-                    const active = role.id === aboutRoleId;
-                    return (
-                      <button
-                        key={role.id}
-                        type="button"
-                        role="tab"
-                        id={`about-tab-${role.id}`}
-                        aria-selected={active}
-                        aria-controls={`about-panel-${role.id}`}
-                        tabIndex={active ? 0 : -1}
-                        className={
-                          active ? styles.aboutTabActive : styles.aboutTab
-                        }
-                        onClick={() => setAboutRoleId(role.id)}
-                      >
-                        {role.tab}
-                      </button>
+                    if (role.id !== aboutRoleId) return null;
+                    const featured =
+                      role.values.find((value) => value.featured) ??
+                      role.values[0];
+                    const sideValues = role.values.filter(
+                      (value) => value !== featured,
                     );
-                  })}
-                </div>
+                    const leftValue = sideValues[0];
+                    const rightValue = sideValues[1];
 
-                {about.roles.map((role) => {
-                  if (role.id !== aboutRoleId) return null;
-                  const featured =
-                    role.values.find((v) => v.featured) ?? role.values[0];
-                  const support = role.values.filter((v) => v !== featured);
-
-                  return (
-                    <div
-                      key={role.id}
-                      className={styles.aboutValuesPanel}
-                      role="tabpanel"
-                      id={`about-panel-${role.id}`}
-                      aria-labelledby={`about-tab-${role.id}`}
-                    >
-                      <p className={styles.aboutRoleLead}>{role.lead}</p>
-
-                      <article className={styles.aboutValueFeatured}>
-                        <span className={styles.aboutValueIcon} aria-hidden>
-                          <AboutValueIcon name={featured.icon} />
-                        </span>
-                        <div className={styles.aboutValueCopy}>
-                          <h4 className={styles.aboutValueFeaturedTitle}>
-                            {featured.title}
-                          </h4>
-                          <p className={styles.aboutValueFeaturedBody}>
-                            {featured.body}
-                          </p>
-                        </div>
-                      </article>
-
-                      <div className={styles.aboutValueSupport}>
-                        {support.map((value) => (
-                          <article
-                            key={value.title}
-                            className={styles.aboutValueSupportItem}
-                          >
-                            <span
-                              className={styles.aboutValueIconSm}
-                              aria-hidden
+                    return (
+                      <div
+                        key={role.id}
+                        className={styles.aboutValuesPanel}
+                        role="tabpanel"
+                        id={`about-panel-${role.id}`}
+                        aria-labelledby={`about-tab-${role.id}`}
+                      >
+                        <div className={styles.aboutValuesBook}>
+                          <AboutValueCell
+                            value={featured}
+                            variant="featured"
+                          />
+                          <div className={styles.aboutValuesSeam} aria-hidden>
+                            <svg
+                              viewBox="0 0 100 12"
+                              preserveAspectRatio="none"
                             >
-                              <AboutValueIcon name={value.icon} />
-                            </span>
-                            <div className={styles.aboutValueCopy}>
-                              <h4 className={styles.aboutValueSupportTitle}>
-                                {value.title}
-                              </h4>
-                              <p className={styles.aboutValueSupportBody}>
-                                {value.body}
-                              </p>
-                            </div>
-                          </article>
-                        ))}
-                      </div>
+                              <path
+                                d="M0 0 Q50 12 100 0"
+                                fill="none"
+                                stroke="rgba(245, 245, 243, 0.18)"
+                                strokeWidth="1"
+                                vectorEffect="non-scaling-stroke"
+                              />
+                            </svg>
+                          </div>
+                          <div className={styles.aboutValuesBottom}>
+                            {leftValue ? (
+                              <AboutValueCell
+                                value={leftValue}
+                                variant="left"
+                              />
+                            ) : null}
+                            {rightValue ? (
+                              <AboutValueCell
+                                value={rightValue}
+                                variant="right"
+                              />
+                            ) : null}
+                          </div>
+                        </div>
 
-                      <aside className={styles.aboutValueFoot}>
                         <blockquote className={styles.aboutValueQuote}>
                           <p>«{role.quote.text}»</p>
                           <footer>{role.quote.author}</footer>
                         </blockquote>
-                        <div className={styles.aboutValueSticker} aria-hidden>
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={role.sticker} alt="" />
-                        </div>
-                      </aside>
-                    </div>
-                  );
-                })}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <button
+                  type="button"
+                  className={styles.aboutValuesNav}
+                  aria-label="Следующая аудитория"
+                  onClick={() => shiftAboutRole(1)}
+                >
+                  ›
+                </button>
               </div>
             </div>
           </div>
@@ -1064,17 +1068,46 @@ export default function HomePage() {
 
       <section className={styles.blogSection} id="reviews">
         <h2 className={styles.headingLgDark}>Отзывы</h2>
-        <div className={styles.blogGrid}>
-          {reviews.map((post) => (
-            <article key={post.quote} className={styles.blogCard}>
-              <div className={styles.blogMeta}>
-                <span>{post.category}</span>
-                <span>{post.context}</span>
-              </div>
-              <h3>«{post.quote}»</h3>
-              <p className={styles.blogAuthor}>{post.author}</p>
-            </article>
-          ))}
+        <div className={styles.reviewsCarousel}>
+          <button
+            type="button"
+            className={styles.reviewsNav}
+            aria-label="Предыдущий отзыв"
+            onClick={() => shiftReview(-1)}
+          >
+            ‹
+          </button>
+
+          <div className={styles.reviewsViewport}>
+            <div
+              className={styles.reviewsTrack}
+              style={{ transform: `translateX(-${reviewPage * 100}%)` }}
+            >
+              {reviewPages.map((page) => (
+                <div
+                  key={page.map((post) => post.id).join("-")}
+                  className={styles.reviewsPage}
+                >
+                  {page.map((post) => (
+                    <article key={post.id} className={styles.blogCard}>
+                      <p className={styles.blogContext}>{post.context}</p>
+                      <p className={styles.blogQuote}>«{post.quote}»</p>
+                      <p className={styles.blogAuthor}>{post.author}</p>
+                    </article>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <button
+            type="button"
+            className={styles.reviewsNav}
+            aria-label="Следующий отзыв"
+            onClick={() => shiftReview(1)}
+          >
+            ›
+          </button>
         </div>
         <a className={styles.viewAll} href="#start">
           Начать собирать воспоминания
@@ -1120,7 +1153,7 @@ export default function HomePage() {
       <section className={styles.appBanner}>
         <h2 className={styles.headingLg}>{finalCta.title}</h2>
         <p className={styles.appBannerLead}>{finalCta.body}</p>
-        <a className={styles.primaryBtn} href="#start">
+        <a className={styles.primaryBtn} href="#artifacts">
           {finalCta.button}
         </a>
       </section>
@@ -1138,7 +1171,16 @@ export default function HomePage() {
           </div>
           <div className={styles.footerContact}>
             <p className={styles.eyebrow}>Начните сейчас</p>
-            <h2 className={styles.headingMd}>{finalCta.footerTitle}</h2>
+            <blockquote className={styles.footerQuote}>
+              {finalCta.footerQuote.map((line) => (
+                <span key={line} className={styles.footerQuoteLine}>
+                  {line}
+                </span>
+              ))}
+              <footer className={styles.footerQuoteAuthor}>
+                {finalCta.footerAuthor}
+              </footer>
+            </blockquote>
             <p className={styles.bodyCopyMuted}>{finalCta.body}</p>
           </div>
         </div>
@@ -1167,7 +1209,7 @@ export default function HomePage() {
           </div>
 
           {submitted ? (
-            <p className={styles.formSuccess}>Спасибо! Мы скоро напишем вам.</p>
+            <p className={styles.formSuccess}>Спасибо! Мы скоро напишем вам</p>
           ) : (
             <form className={styles.form} onSubmit={onSubmit}>
               <label>
@@ -1184,7 +1226,7 @@ export default function HomePage() {
                 />
               </label>
               <button type="submit" className={styles.primaryBtn}>
-                {hero.cta}
+                Отправить
               </button>
             </form>
           )}

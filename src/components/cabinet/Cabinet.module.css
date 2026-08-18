@@ -352,6 +352,7 @@
 }
 
 .profileActions {
+  margin-top: 1.25rem;
   margin-bottom: 1.5rem;
   display: flex;
   flex-wrap: wrap;
@@ -443,6 +444,15 @@
 .statCard strong {
   font-family: var(--font-oswald), Unbounded, sans-serif;
   font-size: 1.8rem;
+  color: var(--plum);
+}
+
+.statCardText {
+  margin: 0;
+  font-family: var(--font-oswald), Unbounded, sans-serif;
+  font-size: 1.15rem;
+  font-weight: 600;
+  line-height: 1.25;
   color: var(--plum);
 }
 
@@ -819,6 +829,24 @@
   opacity: 0.5;
   cursor: default;
   filter: none;
+}
+
+.textLink {
+  display: inline;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--gold, #c9a227);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+  cursor: pointer;
+}
+
+.textLink:hover {
+  color: var(--plum);
 }
 
 .primary:disabled {

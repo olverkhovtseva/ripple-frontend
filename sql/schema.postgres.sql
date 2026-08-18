@@ -20,6 +20,7 @@ CREATE TABLE projects (
   share_slug VARCHAR(50) UNIQUE NOT NULL,
   status VARCHAR(20) DEFAULT 'active',
   invite_message TEXT,
+  video_format VARCHAR(20) NOT NULL DEFAULT 'vertical',
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 

@@ -26,6 +26,7 @@ export async function GET(_request: Request, context: Ctx) {
       organizerName: project.organizer.name || "Организатор",
       deadline: project.deadline,
       deadlineLabel: formatDeadlineRu(project.deadline),
+      videoFormat: project.videoFormat === "horizontal" ? "horizontal" : "vertical",
       shareSlug: project.shareSlug,
       status: project.status,
       questions: project.questions.map((q) => ({

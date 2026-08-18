@@ -105,7 +105,7 @@ export default function ProjectAnalyticsPage({ projectId, secret }: Props) {
 
           {project.participants.length === 0 ? (
             <p className={styles.hint}>
-              Пока никто не ответил. Отправьте ссылку близким или коллегам.
+              Пока никто не ответил. Отправьте ссылку близким или коллегам
             </p>
           ) : (
             <ul className={styles.people}>

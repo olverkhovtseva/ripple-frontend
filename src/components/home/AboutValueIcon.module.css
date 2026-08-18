@@ -1,0 +1,25 @@
+.iconWrap {
+  display: grid;
+  place-items: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  margin: 0 auto 0.55rem;
+  color: #e5c158;
+  filter: drop-shadow(0 0 6px rgba(229, 193, 88, 0.35));
+}
+
+.iconWrap svg {
+  width: 1.85rem;
+  height: 1.85rem;
+}
+
+.iconFeatured {
+  width: 2.45rem;
+  height: 2.45rem;
+  margin-bottom: 0.65rem;
+}
+
+.iconFeatured svg {
+  width: 2.15rem;
+  height: 2.15rem;
+}

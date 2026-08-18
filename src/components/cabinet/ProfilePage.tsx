@@ -131,20 +131,8 @@ export default function ProfilePage() {
         <h1 className={styles.title}>Ваши проекты</h1>
         <p className={styles.lead}>
           Здесь все созданные вами сборы историй. Откройте проект, чтобы увидеть
-          ссылку, аналитику и сценарий.
+          ссылку, аналитику и сценарий
         </p>
-
-        <div className={styles.profileActions}>
-          <Link href="/create/presentation" className={styles.primary}>
-            Новый проект презентации
-          </Link>
-          <Link href="/create/book" className={styles.secondary}>
-            Новая книга
-          </Link>
-          <Link href="/create/video" className={styles.secondary}>
-            Новое видео-обращение
-          </Link>
-        </div>
 
         {loading ? <p className={styles.lead}>Загрузка…</p> : null}
         {error ? <p className={styles.error}>{error}</p> : null}
@@ -153,7 +141,7 @@ export default function ProfilePage() {
           <section className={styles.card}>
             <p className={styles.hint}>
               Пока нет проектов. Создайте первый сбор историй для цифровой
-              презентации или видео-поздравления.
+              презентации или видео-поздравления
             </p>
           </section>
         ) : null}

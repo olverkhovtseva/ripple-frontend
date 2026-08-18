@@ -13,6 +13,7 @@ datasource db {
 model User {
   id        String   @id @default(cuid())
   email     String?  @unique
+  phone     String?  @unique
   name      String?
   createdAt DateTime @default(now()) @map("created_at")
 
@@ -23,19 +24,21 @@ model User {
 }
 
 model Project {
-  id           String   @id @default(cuid())
-  organizerId  String   @map("organizer_id")
-  productType  String   @default("video") @map("product_type")
-  title        String
-  heroName     String   @map("hero_name")
-  deadline     DateTime
-  shareSlug    String   @unique @map("share_slug")
-  status       String   @default("active")
-  inviteMessage String? @map("invite_message")
-  createdAt    DateTime @default(now()) @map("created_at")
+  id            String   @id @default(cuid())
+  organizerId   String   @map("organizer_id")
+  productType   String   @default("video") @map("product_type")
+  title         String
+  heroName      String   @map("hero_name")
+  deadline      DateTime
+  shareSlug     String   @unique @map("share_slug")
+  status        String   @default("active")
+  inviteMessage String?  @map("invite_message")
+  /** vertical | horizontal — формат, который предлагается участникам */
+  videoFormat   String   @default("vertical") @map("video_format")
+  createdAt     DateTime @default(now()) @map("created_at")
 
-  organizer  User               @relation(fields: [organizerId], references: [id])
-  questions  ProjectQuestion[]
+  organizer    User              @relation(fields: [organizerId], references: [id])
+  questions    ProjectQuestion[]
   participants Participant[]
 
   @@map("projects")

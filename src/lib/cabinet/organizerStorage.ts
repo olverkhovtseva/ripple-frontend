@@ -2,12 +2,19 @@ import type { OrganizerProjectView } from "./types";
 
 export const ORGANIZER_STORAGE_KEY = "prive-organizer-projects";
 export const ORGANIZER_USER_KEY = "prive-organizer-user-id";
+export const ORGANIZER_PROFILE_KEY = "prive-organizer-profile";
 
 export type StoredOrganizerProject = {
   id: string;
   secret: string;
   /** presentation = JSON cabinet; video = Prisma */
-  kind?: "presentation" | "video";
+  kind?: "presentation" | "book" | "video";
+};
+
+export type OrganizerProfile = {
+  organizerId: string;
+  name: string;
+  phone: string;
 };
 
 export function readOrganizerProjects(): StoredOrganizerProject[] {
@@ -30,19 +37,45 @@ function writeList(list: StoredOrganizerProject[]) {
 export function rememberOrganizerProject(project: OrganizerProjectView) {
   try {
     const list = readOrganizerProjects();
+    const kind =
+      project.artifactType === "video"
+        ? "video"
+        : project.artifactType === "book"
+          ? "book"
+          : "presentation";
     const next = [
       {
         id: project.id,
         secret: project.organizerSecret,
-        kind: (project.artifactType === "video" ? "video" : "presentation") as
-          | "presentation"
-          | "video",
+        kind: kind as "presentation" | "book" | "video",
       },
       ...list.filter((item) => item.id !== project.id),
     ];
     writeList(next);
   } catch {
     /* ignore */
+  }
+}
+
+export function rememberOrganizerProfile(profile: OrganizerProfile) {
+  try {
+    localStorage.setItem(ORGANIZER_USER_KEY, profile.organizerId);
+    localStorage.setItem(ORGANIZER_PROFILE_KEY, JSON.stringify(profile));
+  } catch {
+    /* ignore */
+  }
+}
+
+export function readOrganizerProfile(): OrganizerProfile | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(ORGANIZER_PROFILE_KEY);
+    if (!raw) return null;
+    const profile = JSON.parse(raw) as OrganizerProfile;
+    if (!profile?.organizerId || !profile?.phone) return null;
+    return profile;
+  } catch {
+    return null;
   }
 }
 
