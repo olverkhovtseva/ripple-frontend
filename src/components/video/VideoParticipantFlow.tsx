@@ -274,7 +274,7 @@ export default function VideoParticipantFlow({ shareSlug }: Props) {
               Сбор видео до: {meta.deadlineLabel}
             </p>
             <h1 className={styles.title}>
-              {brand.name} — сервис сбора коллективных артефактов памяти
+              {brand.name} — сервис сбора коллективных форматов памяти
             </h1>
             <p className={styles.lead}>
               Вы приглашены стать участником в создании уникального подарка

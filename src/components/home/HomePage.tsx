@@ -3,6 +3,7 @@
 import {
   CSSProperties,
   FormEvent,
+  TransitionEvent,
   useEffect,
   useMemo,
   useRef,
@@ -22,8 +23,6 @@ import {
   heroTags,
   metrics,
   navLinks,
-  navLinksLeft,
-  navLinksRight,
   questionExamples,
   reviews,
   scenarioTabs,
@@ -116,8 +115,11 @@ export default function HomePage() {
   const [carouselBusy, setCarouselBusy] = useState(false);
   const [wrappingIndex, setWrappingIndex] = useState<number | null>(null);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
-  const [reviewPage, setReviewPage] = useState(0);
-  const [reviewsPerPage, setReviewsPerPage] = useState(3);
+  const [reviewsVisible, setReviewsVisible] = useState(3);
+  const [reviewIndex, setReviewIndex] = useState(3);
+  const [reviewStep, setReviewStep] = useState(0);
+  const [reviewTransition, setReviewTransition] = useState(true);
+  const [reviewBusy, setReviewBusy] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [heroMotion, setHeroMotion] = useState({
@@ -138,6 +140,7 @@ export default function HomePage() {
   const heroSlotRef = useRef<HTMLDivElement>(null);
   const heroImgRef = useRef<HTMLImageElement>(null);
   const heroRafRef = useRef(0);
+  const reviewsViewportRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     document.body.style.overflow = menuOpen ? "hidden" : "";
@@ -331,25 +334,52 @@ export default function HomePage() {
     goArtifact((artifactIndex + delta + artifacts.length) % artifacts.length);
   }
 
-  const reviewPages = useMemo(() => {
-    const pages: (typeof reviews)[] = [];
-    for (let i = 0; i < reviews.length; i += reviewsPerPage) {
-      pages.push(reviews.slice(i, i + reviewsPerPage));
-    }
-    return pages;
-  }, [reviewsPerPage]);
+  const paddedReviews = useMemo(() => {
+    const pad = reviewsVisible;
+    return [
+      ...reviews.slice(-pad),
+      ...reviews,
+      ...reviews.slice(0, pad),
+    ];
+  }, [reviewsVisible]);
 
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 980px)");
-    const update = () => setReviewsPerPage(mq.matches ? 1 : 3);
+    const update = () => {
+      const nextVisible = mq.matches ? 1 : 3;
+      setReviewsVisible(nextVisible);
+      setReviewIndex(nextVisible);
+      setReviewTransition(false);
+      setReviewBusy(false);
+    };
     update();
     mq.addEventListener("change", update);
     return () => mq.removeEventListener("change", update);
   }, []);
 
   useEffect(() => {
-    setReviewPage(0);
-  }, [reviewsPerPage]);
+    const viewport = reviewsViewportRef.current;
+    if (!viewport) return;
+
+    function updateStep() {
+      const track = viewport?.firstElementChild as HTMLElement | null;
+      if (!track || !viewport) return;
+      const gap = Number.parseFloat(getComputedStyle(track).gap) || 0;
+      const width = viewport.clientWidth;
+      const step =
+        (width - gap * (reviewsVisible - 1)) / reviewsVisible + gap;
+      setReviewStep(step);
+    }
+
+    updateStep();
+    const observer = new ResizeObserver(updateStep);
+    observer.observe(viewport);
+    window.addEventListener("resize", updateStep);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", updateStep);
+    };
+  }, [reviewsVisible]);
 
   function shiftAboutRole(delta: 1 | -1) {
     const roles = about.roles;
@@ -359,10 +389,37 @@ export default function HomePage() {
   }
 
   function shiftReview(delta: 1 | -1) {
-    setReviewPage(
-      (current) =>
-        (current + delta + reviewPages.length) % reviewPages.length,
-    );
+    if (reviewBusy) return;
+    setReviewTransition(true);
+    setReviewBusy(true);
+    setReviewIndex((current) => current + delta);
+  }
+
+  function onReviewTransitionEnd(event: TransitionEvent<HTMLDivElement>) {
+    if (
+      event.target !== event.currentTarget ||
+      event.propertyName !== "transform"
+    ) {
+      return;
+    }
+
+    setReviewBusy(false);
+
+    const realStart = reviewsVisible;
+    const realEnd = reviewsVisible + reviews.length - 1;
+
+    if (reviewIndex > realEnd) {
+      setReviewTransition(false);
+      setReviewIndex(reviewIndex - reviews.length);
+      requestAnimationFrame(() => setReviewTransition(true));
+      return;
+    }
+
+    if (reviewIndex < realStart) {
+      setReviewTransition(false);
+      setReviewIndex(reviewIndex + reviews.length);
+      requestAnimationFrame(() => setReviewTransition(true));
+    }
   }
 
   function jumpToArtifact(artifactId: (typeof artifacts)[number]["id"]) {
@@ -380,31 +437,20 @@ export default function HomePage() {
   return (
     <div className={styles.page}>
       <header className={styles.header}>
-        <div className={styles.headerDesktop}>
-          <nav className={styles.navLeft} aria-label="Навигация слева">
-            {navLinksLeft.map((link) => (
-              <a key={link.href} className={styles.navLink} href={link.href}>
-                {link.label}
-              </a>
-            ))}
-          </nav>
-          <div className={styles.headerCenter}>
-            <a className={styles.logo} href="#start" aria-label={brand.name}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                className={styles.logoImg}
-                src={brand.logo}
-                alt={brand.name}
-              />
+        <nav className={styles.headerDesktop} aria-label="Основная навигация">
+          <a className={styles.logo} href="#start" aria-label={brand.name}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              className={styles.logoImg}
+              src={brand.logo}
+              alt={brand.name}
+            />
+          </a>
+          {navLinks.map((link) => (
+            <a key={link.href} className={styles.navLink} href={link.href}>
+              {link.label}
             </a>
-            <nav className={styles.navCenter} aria-label="Навигация у логотипа">
-              {navLinksRight.map((link) => (
-                <a key={link.href} className={styles.navLink} href={link.href}>
-                  {link.label}
-                </a>
-              ))}
-            </nav>
-          </div>
+          ))}
           <div className={styles.headerActions}>
             <a className={styles.headerCta} href={headerCta.href}>
               <span>{headerCta.label}</span>
@@ -413,7 +459,7 @@ export default function HomePage() {
               <ProfileButton variant="light" />
             </div>
           </div>
-        </div>
+        </nav>
 
         <div className={styles.mobileBar}>
           <a className={styles.logo} href="#start" aria-label={brand.name}>
@@ -569,7 +615,9 @@ export default function HomePage() {
                       onClick={() => jumpToArtifact(tag.artifactId)}
                     >
                       <span className={styles.tagLabel}>{tag.label}</span>
-                      <span className={styles.tagMore}>Узнать больше</span>
+                      <span className={styles.tagArrow} aria-hidden>
+                        →
+                      </span>
                     </button>
                   </li>
                 ))}
@@ -972,8 +1020,69 @@ export default function HomePage() {
         </div>
       </section>
 
+      <section className={styles.blogSection} id="reviews">
+        <h2 className={styles.headingLgDark}>Отзывы</h2>
+        <div
+          className={styles.reviewsCarousel}
+          style={{ "--reviews-visible": reviewsVisible } as CSSProperties}
+        >
+          <button
+            type="button"
+            className={styles.reviewsNav}
+            aria-label="Предыдущий отзыв"
+            onClick={() => shiftReview(-1)}
+            disabled={reviewBusy}
+          >
+            ‹
+          </button>
+
+          <div className={styles.reviewsViewport} ref={reviewsViewportRef}>
+            <div
+              className={[
+                styles.reviewsTrack,
+                reviewTransition ? "" : styles.reviewsTrackInstant,
+              ]
+                .filter(Boolean)
+                .join(" ")}
+              style={{ transform: `translateX(-${reviewIndex * reviewStep}px)` }}
+              onTransitionEnd={onReviewTransitionEnd}
+            >
+              {paddedReviews.map((post, index) => (
+                <article
+                  key={`${post.id}-${index}`}
+                  className={styles.reviewsSlide}
+                >
+                  <div className={styles.blogCard}>
+                    <p className={styles.blogContext}>{post.context}</p>
+                    <blockquote className={styles.blogQuote}>
+                      «{post.quote}»
+                    </blockquote>
+                    <p className={styles.blogAuthor}>
+                      {post.name}, {post.role}
+                    </p>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+
+          <button
+            type="button"
+            className={styles.reviewsNav}
+            aria-label="Следующий отзыв"
+            onClick={() => shiftReview(1)}
+            disabled={reviewBusy}
+          >
+            ›
+          </button>
+        </div>
+        <a className={styles.viewAll} href="#start">
+          Начать собирать воспоминания
+        </a>
+      </section>
+
       <section className={styles.productsSection} id="artifacts">
-        <h2 className={styles.headingLg}>Выберите артефакт</h2>
+        <h2 className={styles.headingLg}>Выберите формат</h2>
 
         <div className={styles.productCarousel}>
           <button
@@ -1066,54 +1175,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className={styles.blogSection} id="reviews">
-        <h2 className={styles.headingLgDark}>Отзывы</h2>
-        <div className={styles.reviewsCarousel}>
-          <button
-            type="button"
-            className={styles.reviewsNav}
-            aria-label="Предыдущий отзыв"
-            onClick={() => shiftReview(-1)}
-          >
-            ‹
-          </button>
-
-          <div className={styles.reviewsViewport}>
-            <div
-              className={styles.reviewsTrack}
-              style={{ transform: `translateX(-${reviewPage * 100}%)` }}
-            >
-              {reviewPages.map((page) => (
-                <div
-                  key={page.map((post) => post.id).join("-")}
-                  className={styles.reviewsPage}
-                >
-                  {page.map((post) => (
-                    <article key={post.id} className={styles.blogCard}>
-                      <p className={styles.blogContext}>{post.context}</p>
-                      <p className={styles.blogQuote}>«{post.quote}»</p>
-                      <p className={styles.blogAuthor}>{post.author}</p>
-                    </article>
-                  ))}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <button
-            type="button"
-            className={styles.reviewsNav}
-            aria-label="Следующий отзыв"
-            onClick={() => shiftReview(1)}
-          >
-            ›
-          </button>
-        </div>
-        <a className={styles.viewAll} href="#start">
-          Начать собирать воспоминания
-        </a>
-      </section>
-
       <section className={styles.faqSection} id="faq">
         <p className={styles.eyebrowDark}>FAQ</p>
         <h2 className={styles.headingLgDark}>Частые вопросы</h2>
@@ -1165,12 +1226,12 @@ export default function HomePage() {
             <nav className={styles.footerNav}>
               <a href="#about">О проекте</a>
               <a href="#how">Как это работает</a>
-              <a href="#artifacts">Артефакты</a>
+              <a href="#artifacts">Форматы</a>
               <a href="#reviews">Отзывы</a>
+              <a href="#faq">Вопросы</a>
             </nav>
           </div>
           <div className={styles.footerContact}>
-            <p className={styles.eyebrow}>Начните сейчас</p>
             <blockquote className={styles.footerQuote}>
               {finalCta.footerQuote.map((line) => (
                 <span key={line} className={styles.footerQuoteLine}>

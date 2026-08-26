@@ -14,7 +14,7 @@ export default function VideoPage() {
     <div className={styles.page}>
       <header className={styles.header}>
         <Link href="/#artifacts" className={styles.back}>
-          ← К артефактам
+          ← К форматам
         </Link>
         <Link href="/" className={styles.logo}>
           {/* eslint-disable-next-line @next/next/no-img-element */}

@@ -1,4 +1,4 @@
-import { russianNameCases } from "@/lib/cabinet/questions";
+import { fillHeroName } from "@/lib/cabinet/questions";
 
 export type VideoScenarioPrompt = {
   id: string;
@@ -95,23 +95,7 @@ export const VIDEO_QUESTION_TEMPLATES = VIDEO_SCENARIO_PROMPTS.map(
 );
 
 export function fillVideoQuestion(template: string, heroName: string): string {
-  const raw = heroName.trim();
-  if (!raw || raw === "[Имя]") {
-    return template
-      .replaceAll("[Имя:дат]", "[Имя]")
-      .replaceAll("[Имя:род]", "[Имя]")
-      .replaceAll("[Имя:тв]", "[Имя]")
-      .replaceAll("[Имя:пр]", "[Имя]");
-  }
-  const cases = russianNameCases(raw);
-
-  return template
-    .replaceAll("[Имя:дат]", cases.dat)
-    .replaceAll("[Имя:род]", cases.gen)
-    .replaceAll("[Имя:тв]", cases.ins)
-    .replaceAll("[Имя:пр]", cases.pre)
-    .replaceAll("[Имя]", cases.nom)
-    .replaceAll("[имя героя]", cases.nom);
+  return fillHeroName(template, heroName);
 }
 
 export function fillVideoPrompt(
