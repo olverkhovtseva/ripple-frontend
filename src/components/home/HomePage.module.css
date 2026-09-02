@@ -23,11 +23,11 @@
 }
 
 .page a.headerCta {
-  color: #351e28;
+  color: #fff;
 }
 
 .page a.headerCta:hover {
-  color: #351e28;
+  color: #fff;
 }
 
 .header {
@@ -109,32 +109,17 @@
 
 .headerCta {
   pointer-events: auto;
-  position: static;
-  right: auto;
-  top: auto;
-  transform: none;
   z-index: 2;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: #c9a227;
-  color: #351e28 !important;
-  border: none;
-  border-radius: 0.3rem;
-  padding: 0.9rem 1.35rem;
-  text-decoration: none;
-  font-size: 0.75rem;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  font-weight: 600;
+  padding: 0.62rem 1.4rem 0.62rem 1.6rem;
+  font-size: 0.67rem;
   white-space: nowrap;
-  transition: background 0.3s ease, color 0.3s ease;
 }
 
-.headerCta span {
+.giftCtaLabel {
   position: relative;
   z-index: 1;
   color: inherit;
+  text-shadow: 0 1px 2px rgba(53, 30, 40, 0.4);
 }
 
 .headerProfile {
@@ -152,29 +137,84 @@
 
 .headerCtaMobile {
   pointer-events: auto;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: #c9a227;
-  color: #351e28 !important;
-  border: none;
-  border-radius: 0.3rem;
-  padding: 0.65rem 0.8rem;
-  text-decoration: none;
-  font-size: 0.62rem;
+  padding: 0.55rem 0.95rem 0.55rem 1.15rem;
+  font-size: 0.6rem;
   letter-spacing: 0.04em;
-  text-transform: uppercase;
   font-weight: 700;
-  white-space: nowrap;
-  max-width: 7.5rem;
+  white-space: normal;
+  max-width: 9.25rem;
   line-height: 1.15;
   text-align: center;
 }
 
-.headerCta:hover,
-.page a.headerCta:hover {
-  background: #b89120;
+.giftCta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  isolation: isolate;
+  background: transparent;
   color: #351e28 !important;
+  border: none;
+  border-radius: 0;
+  text-decoration: none;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-weight: 700;
+  transition: transform 0.28s ease;
+}
+
+.page a.giftCta,
+.page a.giftCta:hover {
+  color: #fff;
+}
+
+.giftCtaFrame {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.giftCtaFrame svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  filter: drop-shadow(0 5px 12px rgba(12, 6, 9, 0.24));
+  transition: filter 0.3s ease;
+}
+
+.giftCtaFill {
+  fill: #c19410;
+  transition: fill 0.3s ease;
+}
+
+/* Изогнутый левый край — тот же росчерк, что держит границу плашек */
+.giftCtaEdge {
+  fill: #f7e6a4;
+  transition: fill 0.3s ease;
+}
+
+.giftCta:hover,
+.page a.giftCta:hover,
+.page a.headerCta:hover {
+  background: transparent;
+  color: #fff !important;
+  transform: translateY(-1px);
+}
+
+.giftCta:hover .giftCtaFill,
+.page a.giftCta:hover .giftCtaFill {
+  fill: #d0a41c;
+}
+
+.giftCta:hover .giftCtaEdge {
+  fill: #fff3ce;
+}
+
+.giftCta:hover .giftCtaFrame svg {
+  filter: drop-shadow(0 8px 16px rgba(12, 6, 9, 0.3));
 }
 
 .mobileBar {
@@ -205,6 +245,7 @@
   --hero-collage: 0;
   --hero-metrics: 0;
   --hero-content: 1;
+  --hero-edge: 0;
 }
 
 .heroInner {
@@ -321,10 +362,104 @@
   top: 0;
   left: 0;
   z-index: 2;
-  overflow: hidden;
   background: transparent;
   will-change: transform, width, height;
   pointer-events: none;
+}
+
+.heroMainClip {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+/* Растворяет нижний край кадра в фоне, пока он лежит лентой поверх экрана */
+.heroMainClip::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(39, 22, 30, 0) 62%,
+    rgba(39, 22, 30, 0.68) 87%,
+    #27161e 100%
+  );
+  opacity: calc(var(--hero-edge, 0) * (1 - var(--hero-collage)));
+}
+
+.heroQuote {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 1;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.55rem;
+  width: 60%;
+  padding: 1.4rem 24% 1.4rem clamp(1.4rem, 2.6vw, 2.6rem);
+  font-family: var(--font-oswald), Oswald, sans-serif;
+  font-size: clamp(0.92rem, 1.32vw, 1.38rem);
+  font-weight: 400;
+  line-height: 1.28;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  text-wrap: balance;
+  will-change: opacity;
+}
+
+/* Под текстом кадр перекрыт наглухо, дальше полоса растворяется в кадре */
+.heroQuote::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(
+    90deg,
+    #27161e 0%,
+    #27161e 70%,
+    rgba(39, 22, 30, 0) 100%
+  );
+}
+
+.heroQuoteLead {
+  color: #f5f5f3;
+}
+
+.heroQuoteAccent {
+  color: #e5c158;
+}
+
+/* В узкой ячейке коллажа фраза не помещается — выпускаем её поверх ряда */
+@media (max-aspect-ratio: 115 / 100), (max-width: 900px) {
+  .heroQuote {
+    left: 50%;
+    top: 50%;
+    bottom: auto;
+    width: 78vw;
+    max-width: 21rem;
+    transform: translate(-50%, -50%);
+    align-items: center;
+    text-align: center;
+    gap: 0.5rem;
+    padding: 0;
+    font-size: clamp(0.92rem, 3.9vw, 1.2rem);
+  }
+
+  /* Полоса во всю ширину экрана: под фразой кадра не видно совсем */
+  .heroQuote::before {
+    inset: -1.7rem -50vw;
+    background: linear-gradient(
+      180deg,
+      rgba(39, 22, 30, 0) 0%,
+      #27161e 16%,
+      #27161e 84%,
+      rgba(39, 22, 30, 0) 100%
+    );
+  }
 }
 
 .heroMainImg {
@@ -332,7 +467,7 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: 68% center;
+  object-position: 62% center;
 }
 
 .heroScrim {
@@ -354,6 +489,16 @@
   display: none;
 }
 
+/* Вытянутые экраны: кадр ложится лентой сверху, текст встаёт под него */
+@media (max-aspect-ratio: 115 / 100) {
+  .heroContent {
+    justify-content: flex-end;
+    width: min(100%, 42rem);
+    max-width: 100%;
+    padding-bottom: 5rem;
+  }
+}
+
 .tags {
   list-style: none;
   margin: 0.5rem 0 1.5rem;
@@ -366,78 +511,94 @@
 }
 
 .tags li {
+  position: relative;
   border: none;
   padding: 0;
   margin: 0;
   min-width: 0;
+  overflow: visible;
+  transition: transform 0.32s ease;
 }
 
 .tagCard {
   position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
   width: 100%;
   min-height: 3.35rem;
-  padding: 0.85rem 0.95rem 0.85rem 0.9rem;
-  border: 1px solid rgba(245, 245, 243, 0.14);
-  border-radius: 0.75rem;
-  background:
-    linear-gradient(
-      145deg,
-      rgba(245, 245, 243, 0.14) 0%,
-      rgba(245, 245, 243, 0.05) 100%
-    );
+  padding: 0.85rem 1.05rem 0.85rem 1.65rem;
+  border: none;
+  border-radius: 0;
+  background: transparent;
   color: #f5f5f3;
   cursor: pointer;
   text-align: left;
   font-family: inherit;
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    0 10px 28px rgba(12, 6, 9, 0.14);
-  overflow: hidden;
-  isolation: isolate;
-  transition:
-    background 0.32s ease,
-    border-color 0.32s ease,
-    box-shadow 0.32s ease,
-    transform 0.32s ease;
+  overflow: visible;
+  transition: none;
 }
 
-.tagCard::before {
-  content: "";
+.tagFrame {
   position: absolute;
-  inset: 0 auto 0 0;
-  width: 3px;
-  background: linear-gradient(180deg, #e5c158 0%, #c9a227 100%);
-  opacity: 0.72;
-  transition: opacity 0.32s ease, width 0.32s ease;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.tagFrame svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  filter: drop-shadow(0 10px 22px rgba(12, 6, 9, 0.18));
+}
+
+.tagFrameFill {
+  fill: rgba(245, 245, 243, 0.12);
+  transition: fill 0.32s ease;
+}
+
+.tagFramePaper {
+  stroke: rgba(245, 245, 243, 0.22);
+  transition: stroke 0.32s ease;
+}
+
+.tagFrameGold {
+  fill: #e5c158;
+  transition: fill 0.32s ease;
+}
+
+.tags li:hover,
+.tags li:focus-within {
+  transform: translateY(-3px);
 }
 
 .tagCard:hover,
 .tagCard:focus-visible {
-  background:
-    linear-gradient(
-      145deg,
-      rgba(245, 245, 243, 0.24) 0%,
-      rgba(201, 162, 39, 0.08) 100%
-    );
-  border-color: rgba(229, 193, 88, 0.52);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.22),
-    0 16px 34px rgba(12, 6, 9, 0.24),
-    0 0 0 1px rgba(201, 162, 39, 0.12);
-  transform: translateY(-3px);
   outline: none;
 }
 
-.tagCard:hover::before,
-.tagCard:focus-visible::before {
-  opacity: 1;
-  width: 4px;
+.tags li:hover .tagFrameFill,
+.tags li:focus-within .tagFrameFill {
+  fill: rgba(245, 245, 243, 0.2);
+}
+
+.tags li:hover .tagFramePaper,
+.tags li:focus-within .tagFramePaper {
+  stroke: rgba(229, 193, 88, 0.42);
+}
+
+.tags li:hover .tagFrameGold,
+.tags li:focus-within .tagFrameGold {
+  fill: #f0d36a;
+}
+
+.tags li:hover .tagFrame svg,
+.tags li:focus-within .tagFrame svg {
+  filter: drop-shadow(0 16px 28px rgba(12, 6, 9, 0.26));
 }
 
 .tagLabel {
@@ -446,6 +607,7 @@
   letter-spacing: 0.01em;
   font-weight: 600;
   min-width: 0;
+  padding-left: 0.15rem;
 }
 
 .tagArrow {
@@ -562,9 +724,9 @@
   position: absolute;
   left: -2%;
   right: -2%;
-  bottom: -0.12em;
+  bottom: -0.22em;
   width: 104%;
-  height: 0.28em;
+  height: 0.48em;
   color: #e5c158;
   pointer-events: none;
   overflow: visible;
@@ -1876,39 +2038,6 @@
   text-align: left;
 }
 
-.aboutFinaleCta {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 0;
-  border-radius: 0.35rem;
-  padding: 0.95rem 1.35rem;
-  background: #351e28;
-  color: #c9a227;
-  font-size: 0.78rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  font-weight: 700;
-  text-decoration: none;
-  transition: filter 0.2s ease, transform 0.2s ease, color 0.2s ease;
-}
-
-.page a.aboutFinaleCta {
-  color: #c9a227;
-}
-
-.aboutFinaleCta:hover,
-.aboutFinaleCta:focus-visible {
-  filter: brightness(1.08);
-  transform: translateY(-1px);
-  color: #e5c158;
-}
-
-.page a.aboutFinaleCta:hover,
-.page a.aboutFinaleCta:focus-visible {
-  color: #e5c158;
-}
-
 .aboutStepVisual {
   display: flex;
   align-items: center;
@@ -3085,35 +3214,25 @@
 
   .tags {
     width: 100%;
-    display: flex;
-    gap: 0.65rem;
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    padding-bottom: 0.35rem;
-    scrollbar-width: none;
-  }
-
-  .tags::-webkit-scrollbar {
-    display: none;
+    max-width: 22.5rem;
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+    overflow: visible;
   }
 
   .tags li {
-    flex: 0 0 min(78vw, 17.5rem);
-    scroll-snap-align: start;
+    flex: none;
+    width: 100%;
   }
 
   .tagCard {
-    min-height: 0;
-    padding: 0.9rem 1rem;
-  }
-
-  .tagArrow {
-    display: none;
+    min-height: 3.15rem;
+    padding: 0.85rem 1rem 0.85rem 1.65rem;
   }
 
   .headerCta {
-    padding: 0.8rem 1rem;
-    font-size: 0.7rem;
+    padding: 0.56rem 1.25rem 0.56rem 1.45rem;
+    font-size: 0.64rem;
   }
 }
 
@@ -3577,7 +3696,7 @@
   .heroContent {
     width: min(100%, 36rem);
     max-width: 100%;
-    padding: 4.5rem 1rem 6.5rem;
+    padding: 4.5rem 1rem 4rem;
     text-align: left;
     align-items: flex-start;
     justify-content: flex-end;
@@ -3585,32 +3704,22 @@
 
   .tags {
     width: 100%;
+    max-width: none;
     margin-bottom: 1.25rem;
-    display: flex;
-    gap: 0.65rem;
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    padding-bottom: 0.35rem;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-  }
-
-  .tags::-webkit-scrollbar {
-    display: none;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+    overflow: visible;
   }
 
   .tags li {
-    flex: 0 0 min(82vw, 18.5rem);
-    scroll-snap-align: start;
+    flex: none;
+    width: 100%;
   }
 
   .tagCard {
-    min-height: 0;
-    padding: 0.9rem 1rem;
-  }
-
-  .tagArrow {
-    display: none;
+    min-height: 3.2rem;
+    padding: 0.9rem 1.05rem 0.9rem 1.7rem;
   }
 
   .heroTitleBreak {
@@ -3748,7 +3857,7 @@
   }
 
   .headerCtaMobile {
-    padding: 0.5rem 0.55rem;
+    padding: 0.55rem 1rem;
     font-size: 0.58rem;
   }
 

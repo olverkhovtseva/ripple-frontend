@@ -1,0 +1,7 @@
+body:has(.appendixRoot) {
+  background: #ecece8;
+}
+
+body:has(.appendixRoot) canvas {
+  display: none !important;
+}

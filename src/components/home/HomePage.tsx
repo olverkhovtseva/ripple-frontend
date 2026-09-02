@@ -3,6 +3,7 @@
 import {
   CSSProperties,
   FormEvent,
+  ReactNode,
   TransitionEvent,
   useEffect,
   useMemo,
@@ -32,6 +33,116 @@ import styles from "./HomePage.module.css";
 
 type AboutRoleId = (typeof about.roles)[number]["id"];
 
+type Pt = { x: number; y: number };
+
+function cubicPoint(p0: Pt, p1: Pt, p2: Pt, p3: Pt, t: number): Pt {
+  const u = 1 - t;
+  const uu = u * u;
+  const tt = t * t;
+  return {
+    x: uu * u * p0.x + 3 * uu * t * p1.x + 3 * u * tt * p2.x + tt * t * p3.x,
+    y: uu * u * p0.y + 3 * uu * t * p1.y + 3 * u * tt * p2.y + tt * t * p3.y,
+  };
+}
+
+function cubicTangent(p0: Pt, p1: Pt, p2: Pt, p3: Pt, t: number): Pt {
+  const u = 1 - t;
+  return {
+    x:
+      3 * u * u * (p1.x - p0.x) +
+      6 * u * t * (p2.x - p1.x) +
+      3 * t * t * (p3.x - p2.x),
+    y:
+      3 * u * u * (p1.y - p0.y) +
+      6 * u * t * (p2.y - p1.y) +
+      3 * t * t * (p3.y - p2.y),
+  };
+}
+
+function taperedRibbon(
+  cubics: [Pt, Pt, Pt, Pt][],
+  halfMin: number,
+  halfMax: number,
+  steps = 20,
+) {
+  const left: Pt[] = [];
+  const right: Pt[] = [];
+
+  cubics.forEach(([p0, p1, p2, p3], cubicIndex) => {
+    const from = cubicIndex === 0 ? 0 : 1;
+    for (let i = from; i <= steps; i += 1) {
+      const localT = i / steps;
+      const globalT = (cubicIndex + localT) / cubics.length;
+      const point = cubicPoint(p0, p1, p2, p3, localT);
+      const tangent = cubicTangent(p0, p1, p2, p3, localT);
+      const length = Math.hypot(tangent.x, tangent.y) || 1;
+      const nx = -tangent.y / length;
+      const ny = tangent.x / length;
+      const envelope = Math.sin(Math.PI * globalT);
+      const half = halfMin + (halfMax - halfMin) * envelope;
+      left.push({ x: point.x + nx * half, y: point.y + ny * half });
+      right.push({ x: point.x - nx * half, y: point.y - ny * half });
+    }
+  });
+
+  const fmt = (pt: Pt) => `${pt.x.toFixed(2)} ${pt.y.toFixed(2)}`;
+  let d = `M${fmt(left[0])}`;
+  for (let i = 1; i < left.length; i += 1) d += `L${fmt(left[i])}`;
+  for (let i = right.length - 1; i >= 0; i -= 1) d += `L${fmt(right[i])}`;
+  return `${d}Z`;
+}
+
+const HERO_UNDERLINE_RIBBON = taperedRibbon(
+  [
+    [
+      { x: 1.8, y: 9.6 },
+      { x: 22, y: 2.4 },
+      { x: 48, y: 1.2 },
+      { x: 72, y: 6.1 },
+    ],
+    [
+      { x: 72, y: 6.1 },
+      { x: 88, y: 9.3 },
+      { x: 100, y: 14.5 },
+      { x: 118, y: 8.3 },
+    ],
+  ],
+  0.18,
+  1.08,
+);
+
+const TAG_GOLD_RIBBON = taperedRibbon(
+  [
+    [
+      { x: 5.77, y: 1.4 },
+      { x: 10.57, y: 9.95 },
+      { x: 11.37, y: 20.96 },
+      { x: 8.1, y: 31.12 },
+    ],
+    [
+      { x: 8.1, y: 31.12 },
+      { x: 5.97, y: 37.9 },
+      { x: 2.5, y: 42.98 },
+      { x: 6.64, y: 50.6 },
+    ],
+  ],
+  0.2,
+  0.95,
+);
+
+/** Силуэт плашки: изогнутый левый край + скруглённый правый */
+const TAG_SHAPE_FILL =
+  "M5.77 1.4H187.2A10.8 10.8 0 0 1 198.75 12.8V39.2A10.8 10.8 0 0 1 187.2 50.6H6.64C2.5 42.98 5.97 37.9 8.1 31.12C11.37 20.96 10.57 9.95 5.77 1.4Z";
+
+const TAG_SHAPE_OUTLINE =
+  "M5.77 1.4H187.2A10.8 10.8 0 0 1 198.75 12.8V39.2A10.8 10.8 0 0 1 187.2 50.6H6.64";
+
+/** Ширина, ниже которой стартовый кадр показываем лентой, а не на весь экран */
+const HERO_COMPACT_WIDTH = 720;
+/** Точка кадрирования по горизонтали: широкий кадр -> узкая ячейка коллажа */
+const HERO_FOCUS_START = 62;
+const HERO_FOCUS_END = 70;
+
 const HERO_COLLAGE_TILES = [
   { src: assets.heroSide1, className: "tileTL" },
   { src: assets.heroSide4, className: "tileTC" },
@@ -42,6 +153,34 @@ const HERO_COLLAGE_TILES = [
   { src: assets.heroSide8, className: "tileBC" },
   { src: assets.heroSide5, className: "tileBR" },
 ] as const;
+
+function GiftCta({
+  href,
+  children,
+  className,
+  onClick,
+}: {
+  href: string;
+  children: ReactNode;
+  className?: string;
+  onClick?: () => void;
+}) {
+  return (
+    <a
+      className={`${styles.giftCta}${className ? ` ${className}` : ""}`}
+      href={href}
+      onClick={onClick}
+    >
+      <span className={styles.giftCtaFrame} aria-hidden>
+        <svg viewBox="0 0 200 52" preserveAspectRatio="none">
+          <path className={styles.giftCtaFill} d={TAG_SHAPE_FILL} />
+          <path className={styles.giftCtaEdge} d={TAG_GOLD_RIBBON} />
+        </svg>
+      </span>
+      <span className={styles.giftCtaLabel}>{children}</span>
+    </a>
+  );
+}
 
 function smoothstep(t: number) {
   const x = Math.min(1, Math.max(0, t));
@@ -130,6 +269,10 @@ export default function HomePage() {
     y: 0,
     w: 0,
     h: 0,
+    focus: HERO_FOCUS_START,
+    edge: 0,
+    zoom: 1,
+    quote: 0,
   });
 
   const [howFlip, setHowFlip] = useState(0);
@@ -199,6 +342,11 @@ export default function HomePage() {
       const img = heroImgRef.current;
       if (!el || !sticky) return;
 
+      const imgAspect =
+        img?.naturalWidth && img.naturalHeight
+          ? img.naturalWidth / img.naturalHeight
+          : 16 / 9;
+
       if (reduced.matches) {
         const sr = slot?.getBoundingClientRect();
         const st = sticky.getBoundingClientRect();
@@ -210,6 +358,10 @@ export default function HomePage() {
           y: sr ? sr.top - st.top : 0,
           w: sr?.width ?? 0,
           h: sr?.height ?? 0,
+          focus: HERO_FOCUS_END,
+          edge: 0,
+          zoom: 1,
+          quote: 1,
         });
         return;
       }
@@ -221,27 +373,20 @@ export default function HomePage() {
       const collage = smoothstep(progress / 0.55);
       const metrics = smoothstep((progress - 0.52) / 0.48);
       const content = 1 - smoothstep(progress / 0.32);
+      // Фраза проступает только после того, как кадр встал в ячейку
+      const quote = smoothstep((progress - 0.55) / 0.1);
 
       const st = sticky.getBoundingClientRect();
       const vw = st.width;
       const vh = st.height;
 
-      const natW = img?.naturalWidth || 16;
-      const natH = img?.naturalHeight || 9;
-      const imgAspect = natW / natH;
-
-      // Стартовый прямоугольник: весь кадр влезает в экран (contain)
-      let startW: number;
-      let startH: number;
-      if (vw / vh > imgAspect) {
-        startH = vh;
-        startW = vh * imgAspect;
-      } else {
-        startW = vw;
-        startH = vw / imgAspect;
-      }
-      const startX = (vw - startW) / 2;
-      const startY = (vh - startH) / 2;
+      // Стартовый кадр — во всю ширину экрана. На вытянутых экранах он лентой
+      // сверху: на всю высоту горизонтальный кадр схлопнулся бы в полосу.
+      const compact = vw <= HERO_COMPACT_WIDTH || vw / vh < 1.15;
+      const startW = vw;
+      const startH = compact ? Math.min(vh * 0.48, vw / 1.12) : vh;
+      const startX = 0;
+      const startY = 0;
 
       const sr = slot?.getBoundingClientRect();
       const slotX = sr ? sr.left - st.left : startX;
@@ -255,6 +400,14 @@ export default function HomePage() {
       const endX = slotX;
       const endY = slotY;
 
+      // Ячейка шире кадра — подтягиваем героиню, но не до конца: левая треть
+      // остаётся спокойной, там встаёт фраза
+      const cellAspect = endW / Math.max(1, endH);
+      const endZoom =
+        cellAspect > imgAspect
+          ? Math.min(1.2, 1 + (cellAspect / imgAspect - 1) * 0.55)
+          : 1;
+
       const t = collage;
       setHeroMotion({
         collage,
@@ -264,6 +417,10 @@ export default function HomePage() {
         y: startY + (endY - startY) * t,
         w: startW + (endW - startW) * t,
         h: startH + (endH - startH) * t,
+        focus: HERO_FOCUS_START + (HERO_FOCUS_END - HERO_FOCUS_START) * t,
+        edge: compact ? 1 : 0,
+        zoom: 1 + (endZoom - 1) * t,
+        quote,
       });
     }
 
@@ -452,9 +609,9 @@ export default function HomePage() {
             </a>
           ))}
           <div className={styles.headerActions}>
-            <a className={styles.headerCta} href={headerCta.href}>
-              <span>{headerCta.label}</span>
-            </a>
+            <GiftCta className={styles.headerCta} href={headerCta.href}>
+              {headerCta.label}
+            </GiftCta>
             <div className={styles.headerProfile}>
               <ProfileButton variant="light" />
             </div>
@@ -471,9 +628,9 @@ export default function HomePage() {
             />
           </a>
           <div className={styles.mobileBarRight}>
-            <a className={styles.headerCtaMobile} href={headerCta.href}>
+            <GiftCta className={styles.headerCtaMobile} href={headerCta.href}>
               {headerCta.label}
-            </a>
+            </GiftCta>
             <ProfileButton variant="light" />
             <button
               type="button"
@@ -505,13 +662,13 @@ export default function HomePage() {
               {link.label}
             </a>
           ))}
-          <a
+          <GiftCta
             className={styles.headerCta}
             href={headerCta.href}
             onClick={closeMenu}
           >
-            <span>{headerCta.label}</span>
-          </a>
+            {headerCta.label}
+          </GiftCta>
         </nav>
       </header>
 
@@ -524,6 +681,7 @@ export default function HomePage() {
               "--hero-collage": String(heroMotion.collage),
               "--hero-metrics": String(heroMotion.metrics),
               "--hero-content": String(heroMotion.content),
+              "--hero-edge": String(heroMotion.edge),
             } as CSSProperties
           }
         >
@@ -542,20 +700,39 @@ export default function HomePage() {
 
           <div
             className={styles.heroMainFly}
-            aria-hidden
             style={{
               transform: `translate3d(${heroMotion.x}px, ${heroMotion.y}px, 0)`,
               width: heroMotion.w ? `${heroMotion.w}px` : "100%",
               height: heroMotion.h ? `${heroMotion.h}px` : "100%",
             }}
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              ref={heroImgRef}
-              className={styles.heroMainImg}
-              src={assets.heroMain}
-              alt=""
-            />
+            <span className={styles.heroMainClip} aria-hidden>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                ref={heroImgRef}
+                className={styles.heroMainImg}
+                src={assets.heroMain}
+                alt=""
+                style={{
+                  objectPosition: `${heroMotion.focus}% center`,
+                  transform: `scale(${heroMotion.zoom})`,
+                  transformOrigin: `${heroMotion.focus}% center`,
+                }}
+              />
+            </span>
+
+            <p
+              className={styles.heroQuote}
+              style={{ opacity: heroMotion.quote }}
+              aria-hidden={heroMotion.quote < 0.5}
+            >
+              <span className={styles.heroQuoteLead}>
+                {hero.collageQuote.lead}
+              </span>
+              <span className={styles.heroQuoteAccent}>
+                {hero.collageQuote.accent}
+              </span>
+            </p>
           </div>
 
           <div className={styles.heroScrim} />
@@ -579,25 +756,11 @@ export default function HomePage() {
                   {hero.titleAccentWord}
                   <svg
                     className={styles.heroTitleUnderline}
-                    viewBox="0 0 120 8"
+                    viewBox="0 0 120 14"
                     preserveAspectRatio="none"
                     aria-hidden
                   >
-                    <path
-                      d="M2 5.2C28 2.4 52 1.8 74 3.1c18 1.1 32 3.4 44 2.2"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.6"
-                      strokeLinecap="round"
-                    />
-                    <path
-                      d="M6 6.4c24-1.2 48-.4 70 .6 14 .6 28 1.4 40-.2"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1"
-                      strokeLinecap="round"
-                      opacity="0.55"
-                    />
+                    <path d={HERO_UNDERLINE_RIBBON} fill="currentColor" />
                   </svg>
                 </span>{" "}
                 {hero.titleAccentTail}
@@ -609,6 +772,27 @@ export default function HomePage() {
               <ul className={styles.tags}>
                 {heroTags.map((tag) => (
                   <li key={tag.label}>
+                    <span className={styles.tagFrame} aria-hidden>
+                      <svg viewBox="0 0 200 52" preserveAspectRatio="none">
+                        <path
+                          className={styles.tagFrameFill}
+                          d={TAG_SHAPE_FILL}
+                        />
+                        <path
+                          className={styles.tagFramePaper}
+                          d={TAG_SHAPE_OUTLINE}
+                          fill="none"
+                          strokeWidth="1.35"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          vectorEffect="non-scaling-stroke"
+                        />
+                        <path
+                          className={styles.tagFrameGold}
+                          d={TAG_GOLD_RIBBON}
+                        />
+                      </svg>
+                    </span>
                     <button
                       type="button"
                       className={styles.tagCard}
@@ -1008,12 +1192,6 @@ export default function HomePage() {
                 <p className={styles.aboutFinaleStatement}>
                   {about.stepFinale.statement}
                 </p>
-                <a
-                  className={styles.aboutFinaleCta}
-                  href={about.stepFinale.reviewsHref}
-                >
-                  {about.stepFinale.reviewsCta}
-                </a>
               </div>
             </div>
           </article>
@@ -1214,7 +1392,7 @@ export default function HomePage() {
       <section className={styles.appBanner}>
         <h2 className={styles.headingLg}>{finalCta.title}</h2>
         <p className={styles.appBannerLead}>{finalCta.body}</p>
-        <a className={styles.primaryBtn} href="#artifacts">
+        <a className={styles.primaryBtn} href="/auth/organizer">
           {finalCta.button}
         </a>
       </section>

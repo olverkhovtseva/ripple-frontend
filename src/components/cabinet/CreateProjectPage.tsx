@@ -1,19 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { usePathname } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { brand } from "@/components/home/data";
+import {
+  clearCreateDraft,
+  readCreateDraft,
+  resumeNextPath,
+  saveCreateDraft,
+  type BookCreateDraft,
+} from "@/lib/cabinet/createDraft";
 import {
   daysUntil,
   fillHeroName,
   getScenarioPromptItems,
 } from "@/lib/cabinet/questions";
-import {
-  rememberOrganizerProject,
-  rememberOrganizerProfile,
-  readOrganizerProfile,
-} from "@/lib/cabinet/organizerStorage";
-import { formatPhoneDisplay, isValidRuPhone } from "@/lib/cabinet/phone";
+import { rememberOrganizerProject } from "@/lib/cabinet/organizerStorage";
 import { joinUrl } from "@/lib/cabinet/serialize";
 import type {
   ArtifactType,
@@ -36,7 +39,6 @@ const COPY: Record<
     eyebrow: string;
     title: string;
     lead: string;
-    titlePlaceholder: (hero: string) => string;
     scenarioHint: string;
     inviteLead: string;
   }
@@ -47,7 +49,6 @@ const COPY: Record<
     eyebrow: "Цифровая презентация",
     title: "Создайте проект сбора историй",
     lead: "Укажите героя, дату подарка и соберите сценарий из подсказок. Затем получите уникальную ссылку для участников",
-    titlePlaceholder: (hero) => `Книга ${hero || "Ольги"}`,
     scenarioHint:
       "Мы считаем, что 5–6 подсказок — оптимальное количество, чтобы участники затратили не более 20 минут, не утомлялись и вовлечённо, качественно и глубоко могли записать свои истории",
     inviteLead:
@@ -59,7 +60,6 @@ const COPY: Record<
     eyebrow: "Премиум-книга",
     title: "Создайте проект сбора историй",
     lead: "Укажите героя, дату подарка и соберите сценарий из подсказок. Затем получите уникальную ссылку для участников",
-    titlePlaceholder: (hero) => `Книга ${hero || "Ольги"}`,
     scenarioHint:
       "Мы считаем, что 5–6 подсказок — оптимальное количество, чтобы участники затратили не более 20 минут, не утомлялись и вовлечённо, качественно и глубоко могли записать свои истории",
     inviteLead:
@@ -71,7 +71,6 @@ const COPY: Record<
     eyebrow: "Видео-поздравление",
     title: "Создайте видео-обращение",
     lead: "Укажите героя, дату подарка и соберите сценарий вопросов. Участники запишут ответы на видео по вашей уникальной ссылке",
-    titlePlaceholder: (hero) => `Фильм для ${hero || "Ольги"}`,
     scenarioHint:
       "Мы считаем, что 5–6 подсказок — оптимальное количество, чтобы участники затратили не более 20 минут, не утомлялись и вовлечённо записали живые видео-истории",
     inviteLead:
@@ -84,10 +83,9 @@ type Props = {
 };
 
 export default function CreateProjectPage({ artifactType }: Props) {
+  const pathname = usePathname();
   const copy = COPY[artifactType];
-  const [step, setStep] = useState<"auth" | "form">("auth");
   const [organizerName, setOrganizerName] = useState("");
-  const [organizerPhone, setOrganizerPhone] = useState("");
   const [heroName, setHeroName] = useState("");
   const [projectTitle, setProjectTitle] = useState("");
   const [deadline, setDeadline] = useState("");
@@ -98,17 +96,20 @@ export default function CreateProjectPage({ artifactType }: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
+  const resumeStarted = useRef(false);
 
   const prompts = useMemo(() => getScenarioPromptItems(audience), [audience]);
   const daysLeft = deadline ? daysUntil(deadline) : null;
   const link = project ? joinUrl(project.token) : "";
 
   useEffect(() => {
-    const profile = readOrganizerProfile();
-    if (!profile) return;
-    setOrganizerName(profile.name);
-    setOrganizerPhone(formatPhoneDisplay(profile.phone));
-    setStep("form");
+    fetch("/api/auth/me")
+      .then(async (res) => {
+        if (!res.ok) return;
+        const me = (await res.json()) as { name?: string };
+        setOrganizerName(me.name || "");
+      })
+      .catch(() => null);
   }, []);
 
   useEffect(() => {
@@ -119,42 +120,89 @@ export default function CreateProjectPage({ artifactType }: Props) {
     }
   }, [audience]);
 
+  const createFromDraft = useCallback(
+    async (draft: BookCreateDraft) => {
+      setBusy(true);
+      setError("");
+      try {
+        const res = await fetch("/api/projects", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            artifactType: draft.artifactType,
+            heroName: draft.heroName,
+            projectTitle: draft.projectTitle || undefined,
+            deadline: draft.deadline,
+            audience: draft.audience,
+            questionIndexes: draft.questionIndexes,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Ошибка создания");
+        const created = data.project as OrganizerProjectView;
+        setProject(created);
+        setInviteMessage(created.inviteMessage);
+        rememberProject(created);
+        clearCreateDraft();
+        window.history.replaceState({}, "", pathname);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Ошибка");
+      } finally {
+        setBusy(false);
+      }
+    },
+    [pathname],
+  );
+
+  useEffect(() => {
+    if (resumeStarted.current) return;
+    if (typeof window === "undefined") return;
+    if (new URLSearchParams(window.location.search).get("resume") !== "1") {
+      return;
+    }
+
+    const draft = readCreateDraft();
+    if (!draft || draft.kind !== "book") return;
+
+    resumeStarted.current = true;
+    setHeroName(draft.heroName);
+    setProjectTitle(draft.projectTitle);
+    setDeadline(draft.deadline);
+    setAudience(draft.audience);
+    setSelected(draft.questionIndexes);
+
+    fetch("/api/auth/me")
+      .then(async (res) => {
+        if (!res.ok) {
+          window.location.replace(
+            `/auth/organizer?next=${encodeURIComponent(resumeNextPath(pathname))}`,
+          );
+          return;
+        }
+        const me = (await res.json()) as { name?: string };
+        setOrganizerName(me.name || "");
+        await createFromDraft(draft);
+      })
+      .catch(() => {
+        window.location.replace(
+          `/auth/organizer?next=${encodeURIComponent(resumeNextPath(pathname))}`,
+        );
+      });
+  }, [createFromDraft, pathname]);
+
   function toggleQuestion(index: number) {
     setSelected((prev) =>
       prev.includes(index) ? prev.filter((i) => i !== index) : [...prev, index],
     );
   }
 
-  async function continueWithAuth() {
-    setBusy(true);
-    setError("");
-    try {
-      if (!organizerName.trim()) throw new Error("Укажите имя");
-      if (!isValidRuPhone(organizerPhone)) {
-        throw new Error("Укажите корректный номер телефона (+7…)");
-      }
-      const res = await fetch("/api/auth/organizer", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: organizerName.trim(),
-          phone: organizerPhone.trim(),
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Ошибка");
-      rememberOrganizerProfile({
-        organizerId: data.organizerId,
-        name: data.name || organizerName.trim(),
-        phone: data.phone,
-      });
-      setOrganizerPhone(formatPhoneDisplay(data.phone));
-      setStep("form");
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Ошибка");
-    } finally {
-      setBusy(false);
+  function validateForm() {
+    if (!heroName.trim()) throw new Error("Укажите имя героя торжества");
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(deadline.trim())) {
+      throw new Error("Укажите дату подготовки подарка");
+    }
+    if (selected.length < 1) {
+      throw new Error("Выберите хотя бы один вопрос для сценария");
     }
   }
 
@@ -162,31 +210,28 @@ export default function CreateProjectPage({ artifactType }: Props) {
     setBusy(true);
     setError("");
     try {
-      if (!organizerName.trim() || !isValidRuPhone(organizerPhone)) {
-        setStep("auth");
-        throw new Error("Сначала укажите имя и телефон");
+      validateForm();
+
+      const draft: BookCreateDraft = {
+        kind: "book",
+        artifactType,
+        heroName: heroName.trim(),
+        projectTitle: projectTitle.trim(),
+        deadline: deadline.trim(),
+        audience,
+        questionIndexes: selected.slice(),
+      };
+
+      const meRes = await fetch("/api/auth/me");
+      if (!meRes.ok) {
+        saveCreateDraft(draft);
+        window.location.href = `/auth/organizer?next=${encodeURIComponent(resumeNextPath(pathname))}`;
+        return;
       }
-      const res = await fetch("/api/projects", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          artifactType,
-          heroName,
-          projectTitle: projectTitle || undefined,
-          deadline,
-          audience,
-          questionIndexes: selected,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Ошибка создания");
-      const created = data.project as OrganizerProjectView;
-      setProject(created);
-      setInviteMessage(created.inviteMessage);
-      rememberProject(created);
+
+      await createFromDraft(draft);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Ошибка");
-    } finally {
       setBusy(false);
     }
   }
@@ -241,69 +286,16 @@ export default function CreateProjectPage({ artifactType }: Props) {
       </header>
 
       <main className={styles.main}>
-        {!project && step === "auth" ? (
-          <>
-            <p className={styles.eyebrow}>{copy.eyebrow}</p>
-            <h1 className={styles.title}>Войдите как организатор</h1>
-            <p className={styles.lead}>
-              Укажите имя и телефон — так мы сохраним проекты в вашем профиле
-              Подтверждение по SMS пока не требуется
-            </p>
-            <section className={styles.card}>
-              <h2 className={styles.cardTitle}>Ваши данные</h2>
-              <label className={styles.field}>
-                <span>Имя</span>
-                <input
-                  value={organizerName}
-                  onChange={(e) => setOrganizerName(e.target.value)}
-                  placeholder="Анна"
-                  autoComplete="name"
-                />
-              </label>
-              <label className={styles.field}>
-                <span>Телефон</span>
-                <input
-                  value={organizerPhone}
-                  onChange={(e) => setOrganizerPhone(e.target.value)}
-                  placeholder="+7 (999) 123-45-67"
-                  inputMode="tel"
-                  autoComplete="tel"
-                />
-              </label>
-              <p className={styles.hint}>
-                По этому номеру вы сможете вернуться к своим проектам на этом
-                устройстве
-              </p>
-              <button
-                type="button"
-                className={styles.primaryGold}
-                disabled={busy}
-                onClick={continueWithAuth}
-              >
-                {busy ? "Сохраняем…" : "Продолжить"}
-              </button>
-            </section>
-          </>
-        ) : null}
-
-        {!project && step === "form" ? (
+        {!project ? (
           <>
             <p className={styles.eyebrow}>{copy.eyebrow}</p>
             <h1 className={styles.title}>{copy.title}</h1>
             <p className={styles.lead}>{copy.lead}</p>
-            <p className={styles.hint}>
-              Организатор: <strong>{organizerName}</strong>
-              {" · "}
-              {organizerPhone}
-              {" · "}
-              <button
-                type="button"
-                className={styles.textLink}
-                onClick={() => setStep("auth")}
-              >
-                изменить
-              </button>
-            </p>
+            {organizerName ? (
+              <p className={styles.hint}>
+                Организатор: <strong>{organizerName}</strong>
+              </p>
+            ) : null}
 
             <section className={styles.card}>
               <h2 className={styles.cardTitle}>1. Параметры проекта</h2>
@@ -316,11 +308,11 @@ export default function CreateProjectPage({ artifactType }: Props) {
                 />
               </label>
               <label className={styles.field}>
-                <span>Название проекта (необязательно)</span>
+                <span>Название проекта</span>
                 <input
                   value={projectTitle}
                   onChange={(e) => setProjectTitle(e.target.value)}
-                  placeholder={copy.titlePlaceholder(heroName)}
+                  placeholder="С юбилеем!"
                 />
               </label>
               <label className={styles.field}>
@@ -413,7 +405,7 @@ export default function CreateProjectPage({ artifactType }: Props) {
                 type="button"
                 className={styles.primaryGold}
                 disabled={busy}
-                onClick={createProject}
+                onClick={() => void createProject()}
               >
                 {busy ? "Создаём…" : "Начать сбор"}
               </button>

@@ -1,0 +1,432 @@
+.root {
+  --ca-green: #006a4e;
+  --ca-red: #c8102e;
+  --ca-line: #e30613;
+  --ink: #1c1c1c;
+  --muted: #5a5a5a;
+  --op: #7a7a7a;
+  --box-line: #3d3d3d;
+  --frame: #d4d4d4;
+  --pos: #1b7a3a;
+  --neg: #c62828;
+  --max: #1565c0;
+  --head: #eceae4;
+  --paper: #ffffff;
+  --flow: minmax(0, 1fr) 22px minmax(0, 1fr) 22px minmax(0, 1fr) 22px
+    minmax(0, 1fr) 22px minmax(0, 1fr) 22px minmax(0, 1fr) 22px minmax(0, 1fr);
+  min-height: 100vh;
+  padding: 28px 20px 48px;
+  background: #ecece8;
+  color: var(--ink);
+  font-family: Calibri, "Segoe UI", Inter, var(--font-inter), Arial, sans-serif;
+}
+
+.sheet {
+  width: min(1440px, 100%);
+  margin: 0 auto;
+  padding: 22px 28px 22px;
+  background: var(--paper);
+  box-shadow: 0 10px 40px rgba(30, 30, 30, 0.08);
+}
+
+.header {
+  margin-bottom: 6px;
+}
+
+.headerTop {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.logo {
+  width: 78px;
+  height: 46px;
+  flex: 0 0 auto;
+}
+
+.appendix {
+  margin: 0 0 6px;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.headerLine {
+  flex: 1;
+  height: 2px;
+  margin-bottom: 11px;
+  background: var(--ca-line);
+}
+
+.title {
+  margin: 10px 0 0;
+  max-width: 920px;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+
+.flow {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr);
+  gap: 0 10px;
+  margin-top: 4px;
+}
+
+.labelCol {
+  display: grid;
+  grid-template-rows: 58px 80px 80px;
+  align-items: center;
+  gap: 8px;
+}
+
+.qLabel {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ca-red);
+  line-height: 1.2;
+}
+
+.flowMain {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.grid,
+.row,
+.defs {
+  display: grid;
+  grid-template-columns: var(--flow);
+  align-items: center;
+  min-width: 0;
+}
+
+.row {
+  min-height: 80px;
+  padding: 8px 10px;
+  border: 1px solid var(--frame);
+  background: #fcfcfc;
+}
+
+.grid {
+  min-height: 58px;
+  align-items: end;
+  padding: 0 10px;
+}
+
+.defs {
+  align-items: start;
+  padding: 2px 10px 0;
+}
+
+.box,
+.slot,
+.op,
+.pool,
+.formulaCard,
+.defText {
+  min-width: 0;
+}
+
+.box,
+.row .op {
+  height: 64px;
+}
+
+.box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 7px;
+  border: 1px solid var(--box-line);
+  background: #fff;
+  text-align: center;
+}
+
+.box strong {
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.box span {
+  margin-top: 2px;
+  font-size: 10.5px;
+  line-height: 1.2;
+  color: #333;
+}
+
+.op {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--op);
+  line-height: 1;
+}
+
+.slot {
+  display: block;
+}
+
+.pool {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  position: relative;
+}
+
+.poolLabel {
+  margin: 0 0 4px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.poolBubble {
+  position: relative;
+  padding: 7px 10px;
+  border: 1.5px solid var(--ca-green);
+  border-radius: 12px;
+  background: #fff;
+  font-size: 11.5px;
+  line-height: 1.3;
+  text-align: center;
+}
+
+.poolBubble::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 8px);
+  width: 1px;
+  height: 96px;
+  background: #9bbfb4;
+}
+
+.formulaCard,
+.defText {
+  position: relative;
+  margin: 0;
+  min-height: 78px;
+}
+
+.formulaCard {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 7px;
+  border: 1.5px solid var(--ca-green);
+  border-radius: 6px;
+  background: #fff;
+  text-align: center;
+}
+
+.formulaCard::before,
+.defText::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  width: 1px;
+  height: 10px;
+  background: #8ebfb0;
+}
+
+.formulaCard p {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.formulaCard strong {
+  font-weight: 700;
+}
+
+.formulaCard sub {
+  font-size: 9px;
+}
+
+.defText {
+  padding-top: 2px;
+  font-size: 11px;
+  line-height: 1.35;
+  color: #333;
+}
+
+.bottom {
+  display: grid;
+  grid-template-columns: minmax(420px, 0.86fr) minmax(0, 1.14fr);
+  gap: 20px 24px;
+  margin-top: 16px;
+  align-items: start;
+}
+
+.kpiCol {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.kpiPair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+.kpiBlock h2 {
+  margin: 0 0 6px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ca-green);
+  text-align: center;
+}
+
+.kpiBlock table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+
+.kpiBlock th {
+  padding: 5px 8px 6px;
+  border-bottom: 2px solid var(--ca-green);
+  color: var(--ca-green);
+  font-weight: 700;
+  text-align: center;
+}
+
+.kpiBlock td {
+  padding: 6px 8px;
+  border-bottom: 1px solid #d8d8d8;
+  text-align: center;
+}
+
+.kpiVal {
+  color: var(--pos);
+  font-weight: 700;
+}
+
+.notes {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding-top: 4px;
+}
+
+.bang {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1px;
+  border: 2.5px solid var(--ca-line);
+  border-radius: 50%;
+  color: var(--ca-line);
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1;
+  font-family: Arial, sans-serif;
+}
+
+.notes ul {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.notes li + li {
+  margin-top: 6px;
+}
+
+.metricTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.metricTable th,
+.metricTable td {
+  border: 1px solid #cfcfcf;
+  padding: 7px 9px;
+  vertical-align: middle;
+}
+
+.metricTable thead th {
+  background: var(--head);
+  font-weight: 700;
+  text-align: center;
+}
+
+.thName {
+  width: 22%;
+}
+
+.thDesc {
+  width: 48%;
+}
+
+.metricName {
+  font-weight: 700;
+  text-align: left;
+}
+
+.metricDesc {
+  text-align: left;
+  color: #2a2a2a;
+}
+
+.metricTable tbody td:nth-last-child(-n + 2) {
+  text-align: center;
+  white-space: nowrap;
+  font-weight: 700;
+}
+
+.pos {
+  color: var(--pos);
+}
+
+.neg {
+  color: var(--neg);
+}
+
+.max {
+  color: var(--max);
+}
+
+@media print {
+  .root {
+    padding: 0;
+    background: #fff;
+  }
+
+  .sheet {
+    width: 100%;
+    box-shadow: none;
+    padding: 8mm;
+  }
+}
+
+@page {
+  size: A3 landscape;
+  margin: 8mm;
+}
+
+@media (max-width: 1100px) {
+  .sheet {
+    min-width: 1280px;
+  }
+}

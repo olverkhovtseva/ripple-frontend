@@ -15,10 +15,16 @@ model User {
   email     String?  @unique
   phone     String?  @unique
   name      String?
+  firstName String?  @map("first_name")
+  lastName  String?  @map("last_name")
   createdAt DateTime @default(now()) @map("created_at")
 
   projects     Project[]
   participants Participant[]
+  memberships  ProjectMembership[]
+  magicLinks   MagicLink[]
+  sessions     Session[]
+  registrations OrganizerRegistration[]
 
   @@map("users")
 }
@@ -37,11 +43,79 @@ model Project {
   videoFormat   String   @default("vertical") @map("video_format")
   createdAt     DateTime @default(now()) @map("created_at")
 
-  organizer    User              @relation(fields: [organizerId], references: [id])
+  organizer    User                 @relation(fields: [organizerId], references: [id])
   questions    ProjectQuestion[]
   participants Participant[]
+  memberships  ProjectMembership[]
 
   @@map("projects")
+}
+
+model ProjectMembership {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  projectId String   @map("project_id")
+  role      String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, projectId])
+  @@index([userId])
+  @@map("project_memberships")
+}
+
+model MagicLink {
+  id              String    @id @default(cuid())
+  userId          String    @map("user_id")
+  projectId       String?   @map("project_id")
+  role            String    @default("organizer")
+  tokenHash       String    @unique @map("token_hash")
+  deviceNonceHash String    @map("device_nonce_hash")
+  expiresAt       DateTime  @map("expires_at")
+  usedAt          DateTime? @map("used_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  registration OrganizerRegistration?
+
+  @@index([userId])
+  @@map("magic_links")
+}
+
+/// Запись при отправке magic-link: данные организатора, проект и момент принятия соглашения
+model OrganizerRegistration {
+  id              String    @id @default(cuid())
+  userId          String    @map("user_id")
+  magicLinkId     String?   @unique @map("magic_link_id")
+  firstName       String    @map("first_name")
+  lastName        String    @map("last_name")
+  projectTitle    String?   @map("project_title")
+  role            String    @default("organizer")
+  termsAcceptedAt DateTime  @map("terms_accepted_at")
+  draftJson       String?   @map("draft_json")
+  completedAt     DateTime? @map("completed_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  magicLink MagicLink? @relation(fields: [magicLinkId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@map("organizer_registrations")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  tokenHash String   @unique @map("token_hash")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
 }
 
 model ProjectQuestion {
@@ -53,6 +127,7 @@ model ProjectQuestion {
 
   project Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
   answers MediaAnswer[]
+  textAnswers TextAnswer[]
 
   @@map("project_questions")
 }
@@ -70,7 +145,10 @@ model Participant {
   project Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
   user    User?         @relation(fields: [userId], references: [id])
   answers MediaAnswer[]
+  textAnswers TextAnswer[]
+  photos  ParticipantPhoto[]
 
+  @@unique([projectId, userId])
   @@map("participants")
 }
 
@@ -88,4 +166,32 @@ model MediaAnswer {
 
   @@unique([participantId, questionId])
   @@map("media_answers")
+}
+
+model TextAnswer {
+  id            String   @id @default(cuid())
+  participantId String   @map("participant_id")
+  questionId    String   @map("question_id")
+  text          String
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  participant Participant     @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  question    ProjectQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([participantId, questionId])
+  @@map("text_answers")
+}
+
+model ParticipantPhoto {
+  id            String   @id @default(cuid())
+  participantId String   @map("participant_id")
+  fileUrl       String   @map("file_url")
+  caption       String?
+  orderIndex    Int      @default(0) @map("order_index")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  participant Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+
+  @@map("participant_photos")
 }

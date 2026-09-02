@@ -1,20 +1,8 @@
-"use client";
+import OrganizerProjectPage from "@/components/cabinet/OrganizerProjectPage";
 
-import { useParams, useSearchParams } from "next/navigation";
-import { Suspense } from "react";
-import ProjectAnalyticsPage from "@/components/cabinet/ProjectAnalyticsPage";
+type Props = { params: Promise<{ id: string }> };
 
-function Inner() {
-  const params = useParams<{ id: string }>();
-  const search = useSearchParams();
-  const secret = search.get("secret") ?? "";
-  return <ProjectAnalyticsPage projectId={params.id} secret={secret} />;
-}
-
-export default function Page() {
-  return (
-    <Suspense fallback={<p style={{ padding: "2rem" }}>Загрузка…</p>}>
-      <Inner />
-    </Suspense>
-  );
+export default async function Page({ params }: Props) {
+  const { id } = await params;
+  return <OrganizerProjectPage projectId={id} />;
 }

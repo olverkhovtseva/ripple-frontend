@@ -105,3 +105,11 @@ export function readOrganizerUserId(): string | null {
 export function hasOrganizerProjects(): boolean {
   return readOrganizerProjects().length > 0 || Boolean(readOrganizerUserId());
 }
+
+export function clearOrganizerLocal() {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem(ORGANIZER_STORAGE_KEY);
+  localStorage.removeItem(ORGANIZER_USER_KEY);
+  localStorage.removeItem(ORGANIZER_PROFILE_KEY);
+  sessionStorage.removeItem("prive-dev-link");
+}

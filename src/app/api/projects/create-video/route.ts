@@ -9,44 +9,9 @@ import {
   isDeadlineNotBeforeToday,
 } from "@/lib/video/questions";
 import { defaultInviteMessage } from "@/lib/cabinet/questions";
-import { isValidRuPhone, normalizePhone } from "@/lib/cabinet/phone";
+import { getSessionUser } from "@/lib/auth/session";
 
 type PromptInput = { question?: string; hint?: string };
-
-async function ensureOrganizer(input: {
-  organizerId?: string | null;
-  name?: string | null;
-  phone?: string | null;
-}) {
-  const name = (input.name ?? "").trim() || "Организатор";
-  const phoneRaw = (input.phone ?? "").trim();
-
-  if (phoneRaw && isValidRuPhone(phoneRaw)) {
-    const phone = normalizePhone(phoneRaw);
-    const byPhone = await prisma.user.findUnique({ where: { phone } });
-    if (byPhone) {
-      return prisma.user.update({
-        where: { id: byPhone.id },
-        data: { name },
-      });
-    }
-    return prisma.user.create({ data: { name, phone } });
-  }
-
-  if (input.organizerId) {
-    const existing = await prisma.user.findUnique({
-      where: { id: input.organizerId },
-    });
-    if (existing) return existing;
-  }
-
-  return prisma.user.create({
-    data: {
-      id: input.organizerId || undefined,
-      name,
-    },
-  });
-}
 
 function normalizePrompts(
   selected: PromptInput[],
@@ -116,22 +81,17 @@ export async function POST(request: Request) {
     const title = (body.title ?? "").trim();
     const heroName = (body.hero_name ?? body.heroName ?? "").trim();
     const deadlineRaw = (body.deadline ?? "").trim();
-    const organizerName = (body.organizer_name ?? body.organizerName ?? "").trim();
-    const organizerPhone = (
-      body.organizer_phone ??
-      body.organizerPhone ??
-      ""
-    ).trim();
     const videoFormatRaw = (body.video_format ?? body.videoFormat ?? "vertical")
       .trim()
       .toLowerCase();
     const videoFormat =
       videoFormatRaw === "horizontal" ? "horizontal" : "vertical";
 
-    if (!organizerName || !isValidRuPhone(organizerPhone)) {
+    const sessionUser = await getSessionUser();
+    if (!sessionUser) {
       return NextResponse.json(
-        { error: "Укажите имя и телефон организатора" },
-        { status: 400 },
+        { error: "Войдите как организатор" },
+        { status: 401 },
       );
     }
 
@@ -174,10 +134,8 @@ export async function POST(request: Request) {
       );
     }
 
-    const organizer = await ensureOrganizer({
-      organizerId: body.organizerId ?? null,
-      name: organizerName,
-      phone: organizerPhone,
+    const organizer = await prisma.user.findUniqueOrThrow({
+      where: { id: sessionUser.id },
     });
     let shareSlug = createShareSlug();
     for (let i = 0; i < 5; i++) {
@@ -221,6 +179,14 @@ export async function POST(request: Request) {
         },
       },
       include: { questions: true },
+    });
+
+    await prisma.projectMembership.upsert({
+      where: {
+        userId_projectId: { userId: organizer.id, projectId: project.id },
+      },
+      create: { userId: organizer.id, projectId: project.id, role: "organizer" },
+      update: { role: "organizer" },
     });
 
     return NextResponse.json({

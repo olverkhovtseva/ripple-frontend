@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { hasOrganizerProjects } from "@/lib/cabinet/organizerStorage";
+import { clearOrganizerLocal, hasOrganizerProjects } from "@/lib/cabinet/organizerStorage";
 import styles from "./ProfileButton.module.css";
+import auth from "@/components/auth/Auth.module.css";
 
 type Props = {
   variant?: "light" | "dark";
@@ -11,19 +12,26 @@ type Props = {
 
 export default function ProfileButton({ variant = "dark" }: Props) {
   const [visible, setVisible] = useState(false);
+  const [hasSession, setHasSession] = useState(false);
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setVisible(hasOrganizerProjects());
-    function onStorage() {
+    function refresh() {
       setVisible(hasOrganizerProjects());
+      fetch("/api/auth/me")
+        .then((res) => {
+          setHasSession(res.ok);
+          if (res.ok) setVisible(true);
+        })
+        .catch(() => null);
     }
-    window.addEventListener("storage", onStorage);
-    window.addEventListener("prive-projects-changed", onStorage);
+    refresh();
+    window.addEventListener("storage", refresh);
+    window.addEventListener("prive-projects-changed", refresh);
     return () => {
-      window.removeEventListener("storage", onStorage);
-      window.removeEventListener("prive-projects-changed", onStorage);
+      window.removeEventListener("storage", refresh);
+      window.removeEventListener("prive-projects-changed", refresh);
     };
   }, []);
 
@@ -34,6 +42,13 @@ export default function ProfileButton({ variant = "dark" }: Props) {
     document.addEventListener("mousedown", onDocClick);
     return () => document.removeEventListener("mousedown", onDocClick);
   }, []);
+
+  async function logout() {
+    clearOrganizerLocal();
+    window.dispatchEvent(new Event("prive-projects-changed"));
+    await fetch("/api/auth/logout", { method: "POST" });
+    window.location.href = "/";
+  }
 
   if (!visible) return null;
 
@@ -66,8 +81,13 @@ export default function ProfileButton({ variant = "dark" }: Props) {
             role="menuitem"
             onClick={() => setOpen(false)}
           >
-            Перейти в профиль
+            Мои проекты
           </Link>
+          {hasSession ? (
+            <button type="button" className={auth.logout} onClick={() => void logout()}>
+              Выйти
+            </button>
+          ) : null}
         </div>
       ) : null}
     </div>

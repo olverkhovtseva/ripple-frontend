@@ -956,6 +956,46 @@
   color: rgba(28, 41, 40, 0.65);
 }
 
+.photoGrid {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.75rem;
+}
+
+.photoCard {
+  border-radius: 0.35rem;
+  overflow: hidden;
+  background: rgba(53, 30, 40, 0.04);
+  border: 1px solid rgba(53, 30, 40, 0.08);
+}
+
+.photoCard img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+}
+
+.photoCard p {
+  margin: 0;
+  padding: 0.45rem 0.5rem;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: rgba(28, 41, 40, 0.7);
+}
+
+.pageScenic .photoCard {
+  background: rgba(39, 22, 30, 0.55);
+  border-color: rgba(245, 245, 243, 0.1);
+}
+
+.pageScenic .photoCard p {
+  color: rgba(245, 245, 243, 0.75);
+}
+
 .participantHint {
   margin: 0 0 1rem;
   padding: 0.7rem 0.85rem;
