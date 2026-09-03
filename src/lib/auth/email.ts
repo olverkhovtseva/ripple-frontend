@@ -65,28 +65,13 @@ ${lead}
 
 Ссылка одноразовая и действует 24 часа.`;
 
-  const key = process.env.RESEND_API_KEY;
-  const from =
-    process.env.AUTH_FROM_EMAIL || "Prive Stories <hello@privestories.ru>";
-
-  if (key) {
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${key}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ from, to: [input.to], subject, html, text }),
-    });
-    if (!res.ok) {
-      const detail = await res.text();
-      throw new Error(`Не удалось отправить письмо: ${detail.slice(0, 180)}`);
-    }
-    return { sent: true as const };
-  }
-
-  console.info(`[magic-link] ${input.to}\n${input.url}`);
-  return { sent: false as const };
+  return sendTransactionalEmail({
+    to: input.to,
+    subject,
+    html,
+    text,
+    logTag: "magic-link",
+  });
 }
 
 export async function sendOrganizerMilestoneEmail(input: {
@@ -111,22 +96,89 @@ export async function sendOrganizerMilestoneEmail(input: {
   `;
   const text = `В проекте «${input.projectTitle}» уже ${input.responseCount} ответов от участников.`;
 
-  const key = process.env.RESEND_API_KEY;
-  const from =
-    process.env.AUTH_FROM_EMAIL || "Prive Stories <hello@privestories.ru>";
+  return sendTransactionalEmail({
+    to: input.to,
+    subject,
+    html,
+    text,
+    logTag: "milestone",
+  });
+}
 
-  if (key) {
-    await fetch("https://api.resend.com/emails", {
+function parseFromAddress(raw: string) {
+  const match = raw.match(/^\s*(.+?)\s*<([^>]+)>\s*$/);
+  if (match) {
+    return { fromName: match[1].trim(), fromEmail: match[2].trim() };
+  }
+  return { fromName: "Prive Stories", fromEmail: raw.trim() };
+}
+
+async function sendTransactionalEmail(input: {
+  to: string;
+  subject: string;
+  html: string;
+  text: string;
+  logTag: string;
+}) {
+  const fromRaw =
+    process.env.AUTH_FROM_EMAIL || "Prive Stories <hello@privestories.ru>";
+  const { fromName, fromEmail } = parseFromAddress(fromRaw);
+  const unisenderKey = process.env.UNISENDER_GO_API_KEY;
+  const resendKey = process.env.RESEND_API_KEY;
+
+  if (unisenderKey) {
+    const endpoint =
+      process.env.UNISENDER_GO_API_URL ||
+      "https://go1.unisender.ru/ru/transactional/api/v1/email/send.json";
+    const res = await fetch(endpoint, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${key}`,
         "Content-Type": "application/json",
+        Accept: "application/json",
+        "X-API-KEY": unisenderKey,
       },
-      body: JSON.stringify({ from, to: [input.to], subject, html, text }),
+      body: JSON.stringify({
+        message: {
+          recipients: [{ email: input.to }],
+          subject: input.subject,
+          from_email: fromEmail,
+          from_name: fromName,
+          body: {
+            html: input.html,
+            plaintext: input.text,
+          },
+        },
+      }),
     });
+    if (!res.ok) {
+      const detail = await res.text();
+      throw new Error(`Не удалось отправить письмо: ${detail.slice(0, 180)}`);
+    }
     return { sent: true as const };
   }
 
-  console.info(`[milestone] ${input.to} — ${input.responseCount} ответов`);
+  if (resendKey) {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${resendKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: fromRaw,
+        to: [input.to],
+        subject: input.subject,
+        html: input.html,
+        text: input.text,
+      }),
+    });
+    if (!res.ok) {
+      const detail = await res.text();
+      throw new Error(`Не удалось отправить письмо: ${detail.slice(0, 180)}`);
+    }
+    return { sent: true as const };
+  }
+
+  console.info(`[${input.logTag}] ${input.to}\n${input.subject}`);
   return { sent: false as const };
 }
