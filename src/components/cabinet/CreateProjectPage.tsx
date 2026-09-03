@@ -79,7 +79,7 @@ const COPY: Record<
 };
 
 type Props = {
-  artifactType: Extract<ArtifactType, "presentation" | "book" | "video">;
+  artifactType: Extract<ArtifactType, "presentation" | "book">;
 };
 
 export default function CreateProjectPage({ artifactType }: Props) {
