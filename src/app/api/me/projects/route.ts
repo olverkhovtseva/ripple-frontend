@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth/session";
-import { projectStatusLabel } from "@/lib/projects/createTextProject";
+import { projectStatusLabel } from "@/lib/projects/constants";
 
 export async function GET() {
   const user = await getSessionUser();

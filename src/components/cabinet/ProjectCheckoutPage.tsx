@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { brand } from "@/components/home/data";
-import { PROMO_CODE_BUILDER } from "@/lib/projects/createTextProject";
+import { PROMO_CODE_BUILDER } from "@/lib/projects/constants";
 import ProfileButton from "@/components/cabinet/ProfileButton";
 import styles from "@/components/cabinet/Cabinet.module.css";
 

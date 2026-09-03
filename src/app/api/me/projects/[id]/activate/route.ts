@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth/session";
-import { PROMO_CODE_BUILDER } from "@/lib/projects/createTextProject";
+import { PROMO_CODE_BUILDER } from "@/lib/projects/constants";
 
 type Ctx = { params: Promise<{ id: string }> };
 
